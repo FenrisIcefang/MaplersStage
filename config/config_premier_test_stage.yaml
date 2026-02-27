@@ -1,11 +1,11 @@
-analysis_name: analysis_name # Used to name the logs files
+analysis_name: 2eme_essaie  # Used to name the logs files
 
 ##### Inputs #####
 ### Samples ###
 # long reads used for assembly and evaluation
 samples: 
- - name: sample_name
-   read_path: /path/to/reads.fastq
+ - name: zymoD6331_sans_Gref
+   read_path: /projects/genscale/nimauric/long_reads/zymoD6331.fastq
 
 # (optional), short reads, may be used for binning or evaluation. Should be from the same sample as the long reads
 #short_reads_1: /path/to/short_reads_1.fastq
@@ -19,8 +19,8 @@ samples:
 #   path: /path/to/reads.fastq
 
 # (optional), used for evaluation
-#reference_genomes: 
-#- /path/to/reference_genome.fasta
+reference_genomes: 
+- /projects/genscale/nimauric/ZymoD6331 
 # (optional), used for evaluation a csv with every line following the template "reference_genome_name, group". The names must be the same as the reference genomes files (without the path and extentions), and the groups are arbitrary
 #abundance_information: /path/to/abundance.csv #
 
@@ -31,8 +31,8 @@ samples:
 
 ### External programs ###
 # (optional), used for evaluation via taxonomic assignation
-#kraken2db: /path/to/kraken_database/ #must be downloaded separately
-#gtdbtk_database: /path/to/gtdbtk_release220/ #must be downloaded separately
+kraken2db: /db/kraken2/current/k2_standard_20251015/  #must be downloaded separately
+gtdbtk_database: /projects/genscale/nimauric/databases/gtdbtk_release220/  #must be downloaded separately
 mash_database: outputs/mash_db #if doesn't exist, will be created here
 checkm_database: outputs/CheckM2_database/uniref100.KO.1.dmnd #if it doesn't exist, CheckM2_database/uniref100.KO.1.dmnd will be created in outputs
 
@@ -57,15 +57,15 @@ binners: # uncomment binners to use them
 
 ### Evaluation ###
 # contig analysis
-metaquast: false # requires reference_genomes
+metaquast: true # requires reference_genomes
 read_mapping_evaluation: true 
 short_read_mapping_evaluation: false # requires short_reads_1 and short_reads_2
-reference_mapping_evaluation: false # requires reference_genomes
+reference_mapping_evaluation: true # requires reference_genomes
 
 # bins analysis
 checkm: true
-gtdbtk: false # requires gtdbtk_database and mash_database, analyses all bins
-kraken2_on_bins: false #/!\ Require having done binning separatly on a previous step, requires kraken2db, analyses bins specified in kraken2_target_bins
+gtdbtk: true  # requires gtdbtk_database and mash_database, analyses all bins
+kraken2_on_bins: false  #/!\ Require having done binning separatly on a previous step, requires kraken2db, analyses bins specified in kraken2_target_bins
 kraken2_target_bins: #/!\ Require having done binning separatly on a previous step (it analyzes the bins within the mapler output), requires kraken2db. Do not include the .fa extension in the name
  - bin.1
  - another_bin_name
@@ -105,7 +105,7 @@ rule_metaflye_assembly:
 
 rule_hifiasm_meta_assembly: 
   threads: 48
-  memory: 160000 
+  memory: 420000 
   time: 2*24*60 #in minutes
 
 rule_operaMS_assembly: 
