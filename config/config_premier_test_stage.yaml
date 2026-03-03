@@ -106,7 +106,7 @@ rule_metaflye_assembly:
 rule_hifiasm_meta_assembly: 
   threads: 48
   memory: 420000 
-  time: 2*24*60 #in minutes
+  time: 4*24*60 #in minutes
 
 rule_operaMS_assembly: 
   threads: 48
