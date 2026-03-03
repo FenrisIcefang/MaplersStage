@@ -1,3 +1,4 @@
+  GNU nano 7.2                                                                kronatax.sh                                                                         
 #!/bin/sh
 
 conda_env=$(conda info --envs | awk '$1=="*"{print $2}')
@@ -7,4 +8,9 @@ if [ ! -f "$conda_env"/opt/krona/taxonomy/taxonomy.tab ]; then
     ktUpdateTaxonomy.sh --only-build
 fi
 
-touch outputs/.kronatax
+
+if [ ! -f "$conda_env"/opt/krona/taxonomy/taxonomy.tab ]; then
+    exit 1
+else 
+    touch outputs/.kronatax
+fi

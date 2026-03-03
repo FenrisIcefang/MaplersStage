@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # This script checks the quality of any input assembly using metaquast
 # "$1" : path/to/the/assembly.fasta
 # "$2" : path/to/the/output/folder
