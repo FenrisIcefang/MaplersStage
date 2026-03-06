@@ -11,7 +11,7 @@ if("metaMDBG" in config["assemblers"]) :
             runtime=eval(config["rule_metaMDBG_assembly"]["time"]),
         input : lambda wildcards: get_sample("read_path", wildcards),
         output : "outputs/{sample}/metaMDBG/assembly.fasta"
-        shell : "./sources/assembly/metaMDBG_wraper.sh {input} {params.tmp_directory} {output}"
+        shell : "./sources/assembly/metaMDBG_wraper.sh {input} {params.tmp_directory} {output} {TECH}"
 
 if("metaflye" in config["assemblers"]) :
     rule metaflye_assembly :

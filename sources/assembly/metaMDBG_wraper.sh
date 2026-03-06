@@ -3,10 +3,19 @@
 sample="$1"
 tmp_directory="$2"
 output="$3"
+technology="$4"
+
 Ncpu=$(nproc)
 
-
 mkdir -p "$tmp_directory"
+
+# Select read type depending on sequencing technology
+if [ "$technology" = "ont" ]; then
+    READ_TYPE="--in-ont"
+else
+    READ_TYPE="--in-hifi"
+fi
+
 metaMDBG asm "$tmp_directory" "$sample" -t $Ncpu
 
 gzip -d "$tmp_directory"/contigs.fasta.gz
