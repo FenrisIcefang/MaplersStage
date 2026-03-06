@@ -32,7 +32,19 @@ def get_reference(reference_name) :
         if reference_name in ref : 
             return ref
     return None
-    
+
+
+##### Sequencing technology (global) #####
+TECH = config.get("technology", "hifi")
+
+allowed_tech = ["hifi", "ont"]
+if TECH not in allowed_tech:
+    raise ValueError(f"technology must be one of {allowed_tech} (got: {TECH})")
+
+# minimap2 preset for long reads mapping
+LONGREAD_PRESET = "lr:hq" if TECH == "ont" else "map-hifi"
+
+
 ##### Additional rules #####  
 include : "rules/assembly.smk"
 include : "rules/mapping.smk"
