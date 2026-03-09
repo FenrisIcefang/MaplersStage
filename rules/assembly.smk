@@ -26,7 +26,7 @@ if("metaflye" in config["assemblers"]) :
             runtime=eval(config["rule_metaflye_assembly"]["time"]),
         input : lambda wildcards: get_sample("read_path", wildcards),
         output : "outputs/{sample}/metaflye/assembly.fasta",
-        shell : "./sources/assembly/metaflye_wraper.sh {input} {params.output_directory}"
+        shell : "./sources/assembly/metaflye_wraper.sh {input} {params.output_directory} {TECH}"
 
 if("hifiasm_meta" in config["assemblers"]) :
     rule hifiasm_meta_assembly :

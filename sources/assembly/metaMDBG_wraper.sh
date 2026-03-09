@@ -16,7 +16,7 @@ else
     READ_TYPE="--in-hifi"
 fi
 
-metaMDBG asm "$tmp_directory" "$sample" -t $Ncpu
+metaMDBG asm --out-dir "$tmp_directory" $READ_TYPE "$sample" --threads $Ncpu
 
 gzip -d "$tmp_directory"/contigs.fasta.gz
 mv "$tmp_directory"/contigs.fasta "$output"
