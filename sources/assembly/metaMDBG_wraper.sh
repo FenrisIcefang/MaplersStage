@@ -20,4 +20,6 @@ metaMDBG asm --out-dir "$tmp_directory" $READ_TYPE "$sample" --threads $Ncpu
 
 gzip -d "$tmp_directory"/contigs.fasta.gz
 mv "$tmp_directory"/contigs.fasta "$output"
-rm -rf "$tmp_directory"
+if [ -f "$output_directory/assembly.fasta" ]; then
+    rm -rf "$output_directory"/tmp/
+fi

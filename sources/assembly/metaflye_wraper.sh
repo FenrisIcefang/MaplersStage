@@ -18,5 +18,7 @@ fi
 flye --meta -t $(nproc) --out-dir "$output_directory"/tmp/ $READ_TYPE "$run"
 
 mv "$output_directory"/tmp/assembly.fasta "$output_directory"
-rm -rf "$output_directory"/tmp/
+if [ -f "$output_directory/assembly.fasta" ]; then
+    rm -rf "$output_directory"/tmp/
+fi
 
