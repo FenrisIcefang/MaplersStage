@@ -1,5 +1,4 @@
 channels:
-  - conda-forge
   - bioconda
 dependencies:
-  - metamdbg
+  - myloasm

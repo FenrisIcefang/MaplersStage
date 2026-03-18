@@ -13,6 +13,23 @@ if("metaMDBG" in config["assemblers"]) :
         output : "outputs/{sample}/metaMDBG/assembly.fasta"
         shell : "./sources/assembly/metaMDBG_wraper.sh {input} {params.tmp_directory} {output}"
 
+if("myloasm" in config["assemblers"]) :
+    rule myloasm_assembly :
+        params : 
+            expand("{name}", name=get_samples("name")),
+            tmp_directory="outputs/{sample}/myloasm/tmp/"
+        conda : "../envs/myloasm.yaml"
+        threads : config["rule_myloasm_assembly"]["threads"]
+        resources :
+            cpus_per_task = config["rule_myloasm_assembly"]["threads"],
+            mem_mb=config["rule_myloasm_assembly"]["memory"],
+            runtime=eval(config["rule_myloasm_assembly"]["time"]),
+        input : lambda wildcards: get_sample("read_path", wildcards),
+        output : "outputs/{sample}/myloasm/assembly.fasta"
+        shell : "./sources/assembly/myloasm_wraper.sh {input} {params.tmp_directory} {output}"
+
+
+
 if("metaflye" in config["assemblers"]) :
     rule metaflye_assembly :
         params : 

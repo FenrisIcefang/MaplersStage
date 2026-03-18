@@ -7,4 +7,10 @@ if [ ! -f "$conda_env"/opt/krona/taxonomy/taxonomy.tab ]; then
     ktUpdateTaxonomy.sh --only-build
 fi
 
-touch outputs/.kronatax
+
+if [ ! -f "$conda_env"/opt/krona/taxonomy/taxonomy.tab ]; then
+    exit 1
+else 
+    touch outputs/.kronatax
+fi
+
