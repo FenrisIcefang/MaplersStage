@@ -12,7 +12,7 @@ rule reads_on_contigs_mapping :
         cpus_per_task = config["rules_mapping"]["threads"],
         mem_mb=config["rules_mapping"]["memory"],
         runtime=eval(config["rules_mapping"]["time"]),
-    shell : "./sources/mapping.sh {output} {input.reads} {input.assembly} {LONGREAD_PRESET}"
+    shell : "./sources/mapping.sh {output} {input.reads} {input.assembly} {LONGREAD_PRESET} '' {threads}"
 
 if(config["short_read_binning"] or config["short_read_cobinning"] or config["short_read_mapping_evaluation"]) :
     rule short_reads_on_contigs_mapping : 
@@ -29,7 +29,7 @@ if(config["short_read_binning"] or config["short_read_cobinning"] or config["sho
             cpus_per_task = config["rules_mapping"]["threads"],
             mem_mb=config["rules_mapping"]["memory"],
             runtime=eval(config["rules_mapping"]["time"]),
-        shell : "./sources/mapping.sh {output} {input.R1} {input.assembly} sr {input.R2}"
+        shell : "./sources/mapping.sh {output} {input.R1} {input.assembly} sr {input.R2} {threads}"
 
 
 
@@ -54,7 +54,7 @@ if(config["additional_reads_cobinning"]) :
             cpus_per_task = config["rules_mapping"]["threads"],
             mem_mb=config["rules_mapping"]["memory"],
             runtime=eval(config["rules_mapping"]["time"]),
-        shell : "./sources/mapping.sh {output} {input.reads} {input.assembly} {LONGREAD_PRESET}"
+        shell : "./sources/mapping.sh {output} {input.reads} {input.assembly} {LONGREAD_PRESET} '' {threads}"
 
 if(config['reference_mapping_evaluation']) :
     rule long_reads_on_reference_mapping : 
@@ -73,7 +73,7 @@ if(config['reference_mapping_evaluation']) :
             if params.reads == "none":
                 shell("touch {output}")
             else:
-                shell("./sources/mapping.sh {output} {params.reads} {input.reference} {LONGREAD_PRESET}")
+                shell("./sources/mapping.sh {output} {params.reads} {input.reference} {LONGREAD_PRESET} '' {threads}")
 
 
     rule short_reads_on_reference_mapping : 
@@ -88,7 +88,7 @@ if(config['reference_mapping_evaluation']) :
             cpus_per_task = config["rules_mapping"]["threads"],
             mem_mb=config["rules_mapping"]["memory"],
             runtime=eval(config["rules_mapping"]["time"]),
-        shell : "./sources/mapping.sh {output} {input.R1} {input.reference} sr {input.R2}"
+        shell : "./sources/mapping.sh {output} {input.R1} {input.reference} sr {input.R2} {threads}"
 
 
     rule contigs_on_reference_mapping : 
@@ -102,4 +102,4 @@ if(config['reference_mapping_evaluation']) :
             cpus_per_task = config["rules_mapping"]["threads"],
             mem_mb=config["rules_mapping"]["memory"],
             runtime=eval(config["rules_mapping"]["time"]),
-        shell : "./sources/mapping.sh {output} {input.assembly} {input.reference} asm20"
+        shell : "./sources/mapping.sh {output} {input.assembly} {input.reference} asm20 '' {threads}"
