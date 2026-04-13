@@ -2,7 +2,8 @@ if("metaMDBG" in config["assemblers"]) :
     rule metaMDBG_assembly :
         params : 
             expand("{name}", name=get_samples("name")),
-            tmp_directory="outputs/{sample}/metaMDBG/tmp/"
+            tmp_directory="outputs/{sample}/metaMDBG/tmp/",
+            cleanup=config.get("cleanup_tmp", "yes")
         conda : "../envs/metaMDBG.yaml"
         threads : config["rule_metaMDBG_assembly"]["threads"]
         resources :
@@ -11,13 +12,30 @@ if("metaMDBG" in config["assemblers"]) :
             runtime=eval(config["rule_metaMDBG_assembly"]["time"]),
         input : lambda wildcards: get_sample("read_path", wildcards),
         output : "outputs/{sample}/metaMDBG/assembly.fasta"
-        shell : "./sources/assembly/metaMDBG_wraper.sh {input} {params.tmp_directory} {output} {TECH}"
+        shell : "./sources/assembly/metaMDBG_wraper.sh {input} {params.tmp_directory} {output} {TECH} {params.cleanup}"
+
+if("myloasm" in config["assemblers"]) :
+    rule myloasm_assembly :
+        params : 
+            expand("{name}", name=get_samples("name")),
+            tmp_directory="outputs/{sample}/myloasm/tmp/",
+            cleanup=config.get("cleanup_tmp", "yes")
+        conda : "../envs/myloasm.yaml"
+        threads : config["rule_myloasm_assembly"]["threads"]
+        resources :
+            cpus_per_task = config["rule_myloasm_assembly"]["threads"],
+            mem_mb=config["rule_myloasm_assembly"]["memory"],
+            runtime=eval(config["rule_myloasm_assembly"]["time"]),
+        input : lambda wildcards: get_sample("read_path", wildcards),
+        output : "outputs/{sample}/myloasm/assembly.fasta"
+        shell : "./sources/assembly/myloasm_wraper.sh {input} {params.tmp_directory} {output} {config[technology]} {params.cleanup} {threads}"
 
 if("metaflye" in config["assemblers"]) :
     rule metaflye_assembly :
         params : 
             expand("{name}", name=get_samples("name")),
-            output_directory="outputs/{sample}/metaflye/"
+            output_directory="outputs/{sample}/metaflye/",
+            cleanup=config.get("cleanup_tmp", "yes")
         conda : "../envs/flye.yaml"
         threads : config["rule_metaflye_assembly"]["threads"]
         resources :
@@ -26,13 +44,14 @@ if("metaflye" in config["assemblers"]) :
             runtime=eval(config["rule_metaflye_assembly"]["time"]),
         input : lambda wildcards: get_sample("read_path", wildcards),
         output : "outputs/{sample}/metaflye/assembly.fasta",
-        shell : "./sources/assembly/metaflye_wraper.sh {input} {params.output_directory} {TECH}"
+        shell : "./sources/assembly/metaflye_wraper.sh {input} {params.output_directory} {TECH} {params.cleanup}"
 
 if("hifiasm_meta" in config["assemblers"]) :
     rule hifiasm_meta_assembly :
         params : 
             expand("{name}", name=get_samples("name")),
-            output_directory="outputs/{sample}/hifiasm_meta/"
+            output_directory="outputs/{sample}/hifiasm_meta/",
+            cleanup=config.get("cleanup_tmp", "yes")
         conda : "../envs/hifiasm_meta.yaml"
         threads : config["rule_hifiasm_meta_assembly"]["threads"]
         resources :
@@ -41,7 +60,7 @@ if("hifiasm_meta" in config["assemblers"]) :
             runtime=eval(config["rule_hifiasm_meta_assembly"]["time"]),
         input : lambda wildcards: get_sample("read_path", wildcards),
         output : "outputs/{sample}/hifiasm_meta/assembly.fasta",
-        shell : "./sources/assembly/hifiasm_meta_wraper.sh {input} {params.output_directory}"
+        shell : "./sources/assembly/hifiasm_meta_wraper.sh {input} {params.output_directory} {params.cleanup}"
 
 
 if("operaMS" in config["assemblers"]) :
@@ -49,7 +68,9 @@ if("operaMS" in config["assemblers"]) :
         params : 
             expand("{name}", name=get_samples("name")),
             tmp_directory="outputs/{sample}/operaMS/tmp/",
-            operaMS_path=config["operaMS_path"],
+            operaMS_path=config.get("operaMS_path", "outputs/tools/OPERA-MS"),
+            short_read_assembly=config.get("short_read_assembly", "none"),
+            cleanup=config.get("cleanup_tmp", "yes")
         conda : "../envs/operaMS.yaml"
         threads : config["rule_operaMS_assembly"]["threads"]
         resources :
@@ -60,9 +81,8 @@ if("operaMS" in config["assemblers"]) :
             long_reads = lambda wildcards: get_sample("read_path", wildcards),
             short_read_1 = config["short_reads_1"],
             short_read_2 = config["short_reads_2"],
-            short_read_assembly=config["short_read_assembly"],
         output : "outputs/{sample}/operaMS/assembly.fasta"
-        shell : "./sources/assembly/operaMS_wraper.sh {params.operaMS_path} {input.long_reads} {input.short_read_1} {input.short_read_2} {input.short_read_assembly} {params.tmp_directory} {output}"
+        shell : "./sources/assembly/operaMS_wraper.sh {params.operaMS_path} {input.long_reads} {input.short_read_1} {input.short_read_2} {params.short_read_assembly} {params.tmp_directory} {params.cleanup}"
 
 
 if("metaspades" in config["assemblers"]) :
@@ -70,7 +90,8 @@ if("metaspades" in config["assemblers"]) :
         params :
             expand("{name}", name=get_samples("name")),
             output_directory="outputs/{sample}/metaspades/",
-            long_reads=lambda wildcards: get_sample("read_path", wildcards)
+            long_reads=lambda wildcards: get_sample("read_path", wildcards),
+            cleanup=config.get("cleanup_tmp", "yes")
         conda : "../envs/spades.yaml"
         threads : config["rule_metaspades_assembly"]["threads"]
         resources :
@@ -81,7 +102,7 @@ if("metaspades" in config["assemblers"]) :
             reads_1 = lambda wildcards: get_sample("short_reads_1", wildcards),
             reads_2 = lambda wildcards: get_sample("short_reads_2", wildcards)
         output : "outputs/{sample}/metaspades/assembly.fasta",
-        shell : "./sources/assembly/metaspades_wraper.sh {input.reads_1} {input.reads_2} {params.output_directory} {params.long_reads} {TECH}"
+        shell : "./sources/assembly/metaspades_wraper.sh {input.reads_1} {input.reads_2} {params.output_directory} {params.long_reads} {TECH} {params.cleanup}"
 
 
 if("custom_assembly" in config["assemblers"]) :
