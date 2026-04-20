@@ -14,3 +14,4 @@ if [ ! -f "$conda_env"/opt/krona/taxonomy/taxonomy.tab ]; then
 else 
     touch outputs/.kronatax
 fi
+
