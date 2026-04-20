@@ -7,7 +7,7 @@ reads=$1
 output_directory=$2
 
 # Sets up java parameters so that fastQC works on big files
-export _JAVA_OPTIONS=-Xmx2048m
+export _JAVA_OPTIONS=-Xmx8g
 echo "processing $reads"
 mkdir -p "$output_directory"/
 rm -r "$output_directory"/*
