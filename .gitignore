@@ -3,3 +3,4 @@ logs/
 slurm-*.out
 .snakemake/
 test/
+scripts_travail/

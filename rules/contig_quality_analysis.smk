@@ -42,3 +42,28 @@ if(config["read_mapping_evaluation"]) :
         output : "outputs/{sample}/{assembler}/{reference_reads}_on_contigs_mapping_evaluation/report.txt"
         conda : "../envs/python.yaml"
         shell : "python3 ./sources/contig_quality_analysis/read_mapping_evaluation.py {input.reads} {input.mapping} {params.threshold} > {output}"
+
+if(config["short_read_mapping_evaluation"]):
+    rule short_read_contig_mapping_evaluation:
+        input:
+            bam="outputs/{sample}/{assembler}/short_reads_on_contigs.bam",
+            R1=lambda wildcards: get_short_read("short_reads_1", wildcards),
+            R2=lambda wildcards: get_short_read("short_reads_2", wildcards)
+        output:
+            "outputs/{sample}/{assembler}/short_reads_on_contigs_mapping_evaluation/report.txt"
+        conda:
+            "../envs/python.yaml"
+        threads: 1
+        resources:
+            cpus_per_task=1,
+            mem_mb=5000,
+            runtime=60
+        shell:
+            """
+            python3 sources/contig_quality_analysis/read_mapping_evaluation_short_reads.py \
+                {input.R1} \
+                {input.R2} \
+                {input.bam} \
+                0 \
+                > {output}
+            """
