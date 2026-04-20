@@ -141,7 +141,9 @@ rule all :
             if(config["reference_mapping_evaluation"] == True) else "Snakefile", 
         expand("outputs/{sample}/{assembler}/short_reads_on_contigs.bam", sample=get_samples("name"), assembler=config["assemblers"])
             if(config["short_read_mapping_evaluation"] == True or config["short_read_binning"] == True or config["short_read_cobinning"] == True) else "Snakefile",
-        
+        expand("outputs/{sample}/{assembler}/short_reads_on_contigs_mapping_evaluation/report.txt", sample=get_samples_with_short_reads(), assembler=config["assemblers"])
+            if(config["short_read_mapping_evaluation"] == True) else "Snakefile",
+
         # Bins quality analysis (checkm, separate read and contig quality analysis by bin quality)
         expand("outputs/{sample}/{assembler}/{binning}/checkm/checkm_report.txt", sample=get_samples("name"), assembler = config["assemblers"], binning=binnings)
             if(config["checkm"] == True) else "Snakefile",
@@ -155,3 +157,7 @@ rule all :
             if(config["checkm"] == True and config["read_mapping_evaluation"] == True) else "Snakefile",
         expand("outputs/{sample}/{assembler}/{binning}/read_contig_mapping.txt", sample=get_samples("name"), assembler = config["assemblers"], binning=binnings)
             if(config["checkm"] == True and config["read_mapping_evaluation"] == True) else "Snakefile",
+        expand("outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping_plot.pdf", sample=get_samples_with_short_reads(), assembler=config["assemblers"], binner=config["binners"])
+            if(config["checkm"] == True and config["short_read_binning"] == True) else "Snakefile",
+        expand("outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping.txt", sample=get_samples_with_short_reads(), assembler=config["assemblers"], binner=config["binners"])
+            if(config["checkm"] == True and config["short_read_binning"] == True) else "Snakefile",
