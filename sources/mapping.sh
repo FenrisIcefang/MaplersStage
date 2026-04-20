@@ -6,6 +6,7 @@
 #./sources/mapping.sh outputs/zymo/metaMDBG/contigs_on_reference.Saccharomyces_cerevisiae.bam outputs/zymo/metaMDBG/assembly.fasta /groups/genscale/nimauric/ZymoD6331/Saccharomyces_cerevisiae.fasta
 #./sources/mapping.sh outputs/zymo/metaMDBG/contigs_on_reference.Salmonella_enterica.bam outputs/zymo/metaMDBG/assembly.fasta /groups/genscale/nimauric/ZymoD6331/Salmonella_enterica.fasta
 
+set -eu
 
 output="$1"
 query="$2"
@@ -14,10 +15,14 @@ preset="$4" # map-hifi or map-ont or asm20 or sr
 additional_query="$5" # In case of short read mapping, query= R1, query2 = R2.
 threads="$6" 
 
-minimap2 --split-prefix "${output}.tmp" -a -t "${threads}" -cx "${preset}" "${target}" "${query}" ${additional_query:+${additional_query}} \
-    | samtools sort --threads "${threads}" -m 1G -o "${output}" \  # Eviter le samtools d'etre trops gourmand en memoire car il prend tout
-    && samtools index "${output}"
+if [ -n "$additional_query" ]; then
+    minimap2 --split-prefix "${output}.tmp" -a -t "$threads" -cx "$preset" "$target" "$query" "$additional_query" \
+        | samtools sort --threads "$threads" -m 1G -o "$output"
+else
+    minimap2 --split-prefix "${output}.tmp" -a -t "$threads" -cx "$preset" "$target" "$query" \
+        | samtools sort --threads "$threads" -m 1G -o "$output"
+fi
 
-
+samtools index "$output"
 
 
