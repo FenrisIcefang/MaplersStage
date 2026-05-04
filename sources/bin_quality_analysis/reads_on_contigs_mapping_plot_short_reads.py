@@ -20,14 +20,14 @@ output_text = sys.argv[7]
 
 ### Helpers : uniquement pour adapter aux short reads ###
 def normalize_fastq_name(name, suffix):
-    name = name.split(" ")[0]
+    name = name.split()[0]
     if name.endswith("/1") or name.endswith("/2"):
         return name
     return name + suffix
 
 
 def normalize_bam_name(read):
-    name = read.query_name
+    name = read.query_name.split()[0]
     if name.endswith("/1") or name.endswith("/2"):
         return name
     if read.is_paired:
