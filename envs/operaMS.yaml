@@ -2,5 +2,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  - perl
+  - perl-switch
   - perl-app-cpanminus=1.7047
   - r-rlang=1.1.3

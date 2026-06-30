@@ -1,20 +1,38 @@
-#!/bin/sh
+#!/bin/bash
 # This script analyses a run and generates a quality report
-# $1 : path/to/a/run.fastq
-# $2 : path/to/the/output/folder
+# It only works with PE Illumina avec R1 et R2. 
 
-reads=$1
-output_directory=$2
 
-# Sets up java parameters so that fastQC works on big files
+set -euo pipefail
+
 export _JAVA_OPTIONS=-Xmx8g
-echo "processing $reads"
-mkdir -p "$output_directory"/
-rm -r "$output_directory"/*
-fastqc "$reads" -o "$output_directory"/ -t $(nproc)
 
-mv "$output_directory"/*.html "$output_directory"/fastqc_report.html
-echo "Done!"
+R1=$1
+R2=$2
+output_directory=$3
+R1_output=$4
+R2_output=$5
+threads=$6
 
+mkdir -p "$output_directory"
+
+fastqc \
+    -t "$threads" \
+    -o "$output_directory" \
+    "$R1" "$R2"
+
+R1_base=$(basename "$R1")
+R2_base=$(basename "$R2")
+
+R1_base=${R1_base%.gz}
+R1_base=${R1_base%.fastq}
+R1_base=${R1_base%.fq}
+
+R2_base=${R2_base%.gz}
+R2_base=${R2_base%.fastq}
+R2_base=${R2_base%.fq}
+
+mv "$output_directory/${R1_base}_fastqc.html" "$R1_output"
+mv "$output_directory/${R2_base}_fastqc.html" "$R2_output"
 
 

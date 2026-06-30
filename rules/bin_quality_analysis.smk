@@ -113,11 +113,11 @@ if(config["checkm"] and config["short_read_binning"]):
             text="outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping.txt"
         conda:
             "../envs/python.yaml"
-        threads: 1
+        threads: config["rule_read_contig_mapping_plot"]["threads"]
         resources:
-            cpus_per_task=1,
-            mem_mb=5000,
-            runtime=60
+            cpus_per_task=config["rule_read_contig_mapping_plot"]["threads"],
+            mem_mb=config["rule_read_contig_mapping_plot"]["memory"],
+            runtime=eval(config["rule_read_contig_mapping_plot"]["time"])
         shell:
             """
             python3 sources/bin_quality_analysis/reads_on_contigs_mapping_plot_short_reads.py \

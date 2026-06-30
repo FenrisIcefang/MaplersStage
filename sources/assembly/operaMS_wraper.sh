@@ -9,6 +9,7 @@ short_reads_1="$3"
 short_reads_2="$4"
 short_read_assembly="$5"
 tmp_directory="$6"
+cleanup="${7:-yes}"
 
 
 if [ ! -d "$opera_path" ]; then
@@ -22,13 +23,22 @@ if [ ! -d "$opera_path" ]; then
    perl OPERA-MS.pl check-dependency
 fi
 
+CONTIG_ARG=""
+if [ -n "$short_read_assembly" ] && [ "$short_read_assembly" != "none" ]; then
+    CONTIG_ARG="--contig-file $short_read_assembly"
+fi
 
 perl "$opera_path"/OPERA-MS.pl \
     --num-processors $(nproc) \
     --no-ref-clustering \
-    --contig-file "$short_read_assembly" \
+    $CONTIG_ARG \
     --short-read1 "$short_reads_1" \
     --short-read2 "$short_reads_2" \
     --long-read "$long_reads" \
     --out-dir "$tmp_directory"
 
+mv "$tmp_directory"/OPERA-MS_results/final_assembly.fasta "$tmp_directory"/assembly.fasta
+
+if [ "$cleanup" != "no" ] && [ -f "$tmp_directory/assembly.fasta" ]; then
+    rm -rf "$tmp_directory"
+fi

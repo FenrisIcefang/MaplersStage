@@ -1,6 +1,6 @@
 
 
-if(config["fastqc"] or config["kraken2"] or config["kat"]) : 
+if(config.get("fastqc", False) or config.get("nanoplot", False) or config["kraken2"] or config["kat"]) : 
     rule extract_unmapped_reads : 
         params : 
             expand("{sample}", sample=get_samples("name")),
@@ -18,21 +18,62 @@ if(config["fastqc"] or config["kraken2"] or config["kat"]) :
             runtime=eval(config["rule_extract_unmapped_reads"]["time"]),
         shell : "./sources/read_quality_analysis/extract_unmapped_reads.sh {input.mapping} {params.output_directory}"
 
-if(config["fastqc"]) : 
+if(config.get("fastqc", False)) : 
     rule fastqc : 
         params : 
-            expand("{sample}", sample=get_samples("name")),
-            expand("{fraction}", fraction=config["fractions"]),
             output_directory = "outputs/{sample}/{assembler}/fastqc/{fraction}"
-        input : get_read_path
-        output : "outputs/{sample}/{assembler}/fastqc/{fraction}/fastqc_report.html"
+        input :
+            R1 = get_fastqc_R1,
+            R2 = get_fastqc_R2
+        output :
+            R1_html = "outputs/{sample}/{assembler}/fastqc/{fraction}/R1_fastqc.html",
+            R2_html = "outputs/{sample}/{assembler}/fastqc/{fraction}/R2_fastqc.html"
         conda : "../envs/fastqc.yaml"
         threads : config["rule_fastqc"]["threads"]
         resources :
             cpus_per_task = config["rule_fastqc"]["threads"],
             mem_mb=config["rule_fastqc"]["memory"],
             runtime=eval(config["rule_fastqc"]["time"]),
-        shell : "./sources/read_quality_analysis/fastqc.sh {input} {params.output_directory}"
+        shell : "bash ./sources/read_quality_analysis/fastqc.sh {input.R1} {input.R2} {params.output_directory} {output.R1_html} {output.R2_html} {threads}"
+
+if(config.get("fastqc", False)) :
+    rule extract_short_read_fractions :
+        input :
+            bam = "outputs/{sample}/{assembler}/short_reads_on_contigs.bam"
+        output :
+            mapped_R1 = "outputs/{sample}/{assembler}/fastqc/mapped/R1.fastq",
+            mapped_R2 = "outputs/{sample}/{assembler}/fastqc/mapped/R2.fastq",
+            unmapped_R1 = "outputs/{sample}/{assembler}/fastqc/unmapped/R1.fastq",
+            unmapped_R2 = "outputs/{sample}/{assembler}/fastqc/unmapped/R2.fastq"
+        conda : "../envs/mapping.yaml"
+        threads : config["rule_extract_unmapped_reads"]["threads"]
+        resources :
+            cpus_per_task = config["rule_extract_unmapped_reads"]["threads"],
+            mem_mb = config["rule_extract_unmapped_reads"]["memory"],
+            runtime = eval(config["rule_extract_unmapped_reads"]["time"])
+        shell :
+            "bash ./sources/read_quality_analysis/extract_short_read_fractions.sh {input.bam} outputs/{wildcards.sample}/{wildcards.assembler}/fastqc"
+
+if(config.get("nanoplot", False)) : 
+    rule nanoplot : 
+        params : 
+            expand("{sample}", sample=get_samples("name")),
+            expand("{fraction}", fraction=config["fractions"]),
+            output_directory = "outputs/{sample}/{assembler}/nanoplot/{fraction}"
+        input : 
+            get_read_path
+        output : 
+            "outputs/{sample}/{assembler}/nanoplot/{fraction}/NanoPlot-report.html"
+        conda : 
+            "../envs/nanoplot.yaml"
+        threads : 
+            config["rule_nanoplot"]["threads"]
+        resources :
+            cpus_per_task = config["rule_nanoplot"]["threads"],
+            mem_mb=config["rule_nanoplot"]["memory"],
+            runtime=eval(config["rule_nanoplot"]["time"]),
+        shell : 
+            "./sources/read_quality_analysis/nanoplot.sh {input} {params.output_directory} {threads}"
 
 if(config["kraken2"]) : 
     rule kraken2 :
