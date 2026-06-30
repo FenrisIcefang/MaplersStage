@@ -14,7 +14,7 @@ if("metabat2" in config["binners"]) :
             at_least_one_bin = "outputs/{sample}/{assembler}/metabat2_bins_{reference_reads}_alignement/bins/bin.1.fa"
         shell: "./sources/binning/metabat2_wraper.sh  {input.contigs} {input.alignement} {output.directory}"
 
-if(config["short_read_binning"]) :
+if(config["short_read_cobinning"]) :
     rule metabat2_cobinning_short_reads: 
         input: 
             contigs =  "outputs/{sample}/{assembler}/assembly.fasta",

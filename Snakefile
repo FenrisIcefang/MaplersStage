@@ -75,6 +75,16 @@ def get_reference(reference_name) :
             return ref
     return None
 
+# It determines the correct inputs according to the choice of fractions for the FastQC. 
+def get_fastqc_R1(wildcards):
+    if wildcards.fraction == "full":
+        return get_short_read("short_reads_1", wildcards)
+    return f"outputs/{wildcards.sample}/{wildcards.assembler}/fastqc/{wildcards.fraction}/R1.fastq"
+
+def get_fastqc_R2(wildcards):
+    if wildcards.fraction == "full":
+        return get_short_read("short_reads_2", wildcards)
+    return f"outputs/{wildcards.sample}/{wildcards.assembler}/fastqc/{wildcards.fraction}/R2.fastq"
 
 ##### Sequencing technology (global) #####
 TECH = config.get("technology", "hifi")
@@ -118,9 +128,23 @@ rule all :
     input :
         expand("outputs/{sample}/{assembler}/assembly.fasta", sample=get_samples("name"), assembler = config["assemblers"]),
 
-        # Read quality analysis (fastqc, kraken2, kat)
-        expand("outputs/{sample}/{assembler}/fastqc/{fraction}/fastqc_report.html", sample=get_samples("name"), assembler = config["assemblers"], fraction=config["fractions"])
-            if(config["fastqc"] == True) else "Snakefile",
+        # Read quality analysis (fastqc ou nanoplot, kraken2, kat)
+        expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R1_fastqc.html",
+               sample=get_samples_with_short_reads(),
+               assembler=config["assemblers"],
+               fraction=config["fractions"])
+            if(config.get("fastqc", False) == True) else "Snakefile",
+
+        expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R2_fastqc.html",
+               sample=get_samples_with_short_reads(),
+               assembler=config["assemblers"],
+               fraction=config["fractions"])
+            if(config.get("fastqc", False) == True) else "Snakefile",
+
+        expand("outputs/{sample}/{assembler}/nanoplot/{fraction}/NanoPlot-report.html", sample=get_samples("name"), assembler = config["assemblers"], fraction=config["fractions"])
+            if(config.get("nanoplot", False) == True) else "Snakefile",
+        expand("outputs/{sample}/{assembler}/nanoplot/{fraction}/NanoPlot-report.html", sample=get_samples("name"), assembler = config["assemblers"], fraction=config["fractions"])
+            if(config.get("nanoplot", False) == True) else "Snakefile",
         expand("outputs/{sample}/{assembler}/kraken2/{fraction}/krona.html", sample=get_samples("name"), assembler = config["assemblers"], fraction=config["fractions"])
             if(config["kraken2"] == True) else "Snakefile",
         expand("outputs/{sample}/{assembler}/kat/{fraction}-stats.tsv", sample=get_samples("name"), assembler = config["assemblers"], fraction=config["fractions"])

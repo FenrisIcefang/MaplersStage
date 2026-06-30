@@ -53,11 +53,11 @@ if(config["short_read_mapping_evaluation"]):
             "outputs/{sample}/{assembler}/short_reads_on_contigs_mapping_evaluation/report.txt"
         conda:
             "../envs/python.yaml"
-        threads: 1
+        threads: config["rule_read_contig_mapping_evaluation"]["threads"]
         resources:
-            cpus_per_task=1,
-            mem_mb=5000,
-            runtime=60
+            cpus_per_task=config["rule_read_contig_mapping_evaluation"]["threads"],
+            mem_mb=config["rule_read_contig_mapping_evaluation"]["memory"],
+            runtime=eval(config["rule_read_contig_mapping_evaluation"]["time"])
         shell:
             """
             python3 sources/contig_quality_analysis/read_mapping_evaluation_short_reads.py \

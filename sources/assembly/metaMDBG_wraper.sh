@@ -4,6 +4,7 @@ sample="$1"
 tmp_directory="$2"
 output="$3"
 technology="$4"
+cleanup="${5:-yes}"
 
 Ncpu=$(nproc)
 
@@ -20,6 +21,7 @@ metaMDBG asm --out-dir "$tmp_directory" $READ_TYPE "$sample" --threads $Ncpu
 
 gzip -d "$tmp_directory"/contigs.fasta.gz
 mv "$tmp_directory"/contigs.fasta "$output"
-if [ -f "$output_directory/assembly.fasta" ]; then
-    rm -rf "$output_directory"/tmp/
+
+if [ "$cleanup" != "no" ] && [ -f "$output" ]; then
+    rm -rf "$(dirname "$output")"/tmp/
 fi

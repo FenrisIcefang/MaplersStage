@@ -6,7 +6,7 @@
 
 run="$1"
 output_directory="$2"
-Ncpu=
+cleanup="${3:-yes}"
 
 
 mkdir -p "$output_directory"
@@ -15,4 +15,7 @@ hifiasm_meta -o "$output_directory"/tmp -t $(nproc) "$run"
 # "$2" and "$3" in the awk command have nothing to do with the parameters, they're special characters for awk
 echo awk '/^S/{print ">"$2"\n"$3}' "$output_directory"/tmp.p_ctg.gfa > "$output_directory"/assembly.fasta
 awk '/^S/{print ">"$2"\n"$3}' "$output_directory"/tmp.p_ctg.gfa > "$output_directory"/assembly.fasta
-rm -rf "$output_directory"/tmp*
+
+if [ "$cleanup" != "no" ] && [ -f "$output_directory/assembly.fasta" ]; then
+    rm -rf "$output_directory"/tmp*
+fi

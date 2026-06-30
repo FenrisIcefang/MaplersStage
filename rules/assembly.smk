@@ -103,7 +103,7 @@ if("metaspades" in config["assemblers"]) :
             reads_1 = lambda wildcards: get_sample("short_reads_1", wildcards),
             reads_2 = lambda wildcards: get_sample("short_reads_2", wildcards)
         output : "outputs/{sample}/metaspades/assembly.fasta",
-        shell : "./sources/assembly/metaspades_wraper.sh {input.reads_1} {input.reads_2} {params.output_directory} {params.long_reads} {TECH} {params.cleanup}"
+        shell : "./sources/assembly/metaspades_wraper.sh {input.reads_1} {input.reads_2} {params.output_directory} {params.long_reads} {TECH} {params.cleanup} {threads} {resources.mem_mb}"
 
 
 if("custom_assembly" in config["assemblers"]) :
