@@ -102,7 +102,7 @@ if(config["kat"]) :
             output_prefix="outputs/{sample}/{assembler}/kat/{fraction}",
         input : 
             reads = get_read_path, # The reads in witch we wish to evaluate the read abundance
-            full_reads = lambda wildcards: get_sample( "read_path", wildcards), #The full set, used to evaluate the frequency
+            full_reads = get_long_read_path, #The full set, used to evaluate the frequency
         output : "outputs/{sample}/{assembler}/kat/{fraction}-stats.tsv"
         conda : "../envs/kat.yaml"
         threads : config["rule_kat_sect"]["threads"]

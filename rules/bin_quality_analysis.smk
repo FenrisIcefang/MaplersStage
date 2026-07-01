@@ -48,7 +48,7 @@ if(config["checkm"] and config["binning"]) :
             checkm_report = "outputs/{sample}/{assembler}/{binning}/checkm/quality_report.tsv",
             bins_directory = "outputs/{sample}/{assembler}/{binning}/bins",
             reads_on_contigs_alignment = "outputs/{sample}/{assembler}/reads_on_contigs.bam",
-            reads = lambda wildcards: get_sample("read_path", wildcards)
+            reads = get_long_read_path
         threads: config["rule_read_contig_mapping_plot"]["threads"]
         resources:
             cpus_per_task = config["rule_read_contig_mapping_plot"]["threads"],

@@ -1,15 +1,12 @@
-analysis_name: analysis_name # Used to name the logs files
-
-##### Sequencing technology #####
-# Type of long reads used in the pipeline.
-# Options: default = "hifi" (PacBio HiFi) or "ont" (Oxford Nanopore R10.4+)
-technology: technology_type
+analysis_name: test_1_technology # Used to name the logs files
 
 ##### Inputs #####
 ### Samples ###
-# long reads used for assembly and evaluation
+# technology options: hifi, ont, illumina
+# long reads use read_path; illumina samples use read_path: none and short_reads_1/short_reads_2
 samples: 
- - name: sample_name
+ - name: hifi_1%
+   technology: hifi
    read_path: /path/to/reads.fastq
 
 # (optional), short reads, may be used for binning or evaluation. Should be from the same sample as the long reads

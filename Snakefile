@@ -24,11 +24,21 @@ def get_short_read(attribute, wildcards):
             f"{attribute} not found neither in sample '{wildcards.sample}' nor in global config"
         )
 def sample_has_long_reads(wildcards):
-    return get_sample("read_path", wildcards) != "none"
+    return sample_name_has_long_reads(wildcards.sample)
 
 def sample_has_short_reads(wildcards):
-    index = get_samples("name").index(wildcards.sample)
-    sample = config["samples"][index]
+    return sample_name_has_short_reads(wildcards.sample)
+
+def get_config_sample(sample_name):
+    index = get_samples("name").index(sample_name)
+    return config["samples"][index]
+
+def sample_name_has_long_reads(sample_name):
+    sample = get_config_sample(sample_name)
+    return "read_path" in sample and sample["read_path"] != "none"
+
+def sample_name_has_short_reads(sample_name):
+    sample = get_config_sample(sample_name)
 
     if "short_reads_1" in sample and "short_reads_2" in sample:
         return True
@@ -46,16 +56,204 @@ def get_samples_with_long_reads():
 def get_samples_with_short_reads():
     out = []
     for sample in config["samples"]:
-        if "short_reads_1" in sample and "short_reads_2" in sample:
-            out.append(sample["name"])
-        elif "short_reads_1" in config and "short_reads_2" in config:
+        if sample_name_has_short_reads(sample["name"]):
             out.append(sample["name"])
     return out
+
+##### Sequencing technology and assembler compatibility #####
+
+ASSEMBLER_COMPATIBILITY = {
+    "metaMDBG": ["hifi", "ont"],
+    "metaflye": ["hifi", "ont"],
+    "myloasm": ["hifi", "ont"],
+    "hifiasm_meta": ["hifi"],
+    "operaMS": ["hifi", "ont"],
+    "metaspades": ["illumina"],
+    "custom_assembly": ["hifi", "ont", "illumina"],
+}
+
+ALLOWED_TECHNOLOGIES = ["hifi", "ont", "illumina"]
+
+def get_sample_technology(wildcards):
+    return get_sample("technology", wildcards)
+
+def get_long_read_path(wildcards):
+    tech = get_sample_technology(wildcards)
+    read_path = get_config_sample(wildcards.sample).get("read_path", "none")
+    if tech == "illumina" or read_path == "none":
+        raise ValueError(
+            f"Sample '{wildcards.sample}' does not have long reads compatible with "
+            "this long-read rule."
+        )
+    return read_path
+
+def get_optional_long_read_path(wildcards):
+    if sample_has_long_reads(wildcards):
+        return get_sample("read_path", wildcards)
+    return "none"
+
+def get_longread_preset(wildcards):
+    tech = get_sample_technology(wildcards)
+    if tech == "ont":
+        return "lr:hq"
+    if tech == "hifi":
+        return "map-hifi"
+    raise ValueError(f"No long-read minimap2 preset for technology '{tech}'")
+
+def get_metaspades_long_read_technology(wildcards):
+    tech = get_sample_technology(wildcards)
+    if tech == "hifi":
+        return "pacbio"
+    if tech == "ont":
+        return "ont"
+    return "none"
+
+def validate_sample_technology_config():
+    for sample in config["samples"]:
+        sample_name = sample.get("name", "<missing name>")
+        if "technology" not in sample:
+            raise ValueError(f"Sample '{sample_name}' must define a technology.")
+
+        technology = sample["technology"]
+        if technology not in ALLOWED_TECHNOLOGIES:
+            raise ValueError(
+                f"Sample '{sample_name}' has unknown technology '{technology}'. "
+                f"Allowed values are: {ALLOWED_TECHNOLOGIES}."
+            )
+
+        if technology in ["hifi", "ont"] and not sample_name_has_long_reads(sample_name):
+            raise ValueError(
+                f"Sample '{sample_name}' uses technology '{technology}' and must "
+                "define a long-read read_path."
+            )
+
+        if technology == "illumina" and not sample_name_has_short_reads(sample_name):
+            raise ValueError(
+                f"Sample '{sample_name}' uses technology 'illumina' and must define "
+                "short_reads_1 and short_reads_2."
+            )
+
+    for assembler in config["assemblers"]:
+        if assembler not in ASSEMBLER_COMPATIBILITY:
+            raise ValueError(
+                f"Assembler '{assembler}' is not listed in ASSEMBLER_COMPATIBILITY."
+            )
+
+    for sample in config["samples"]:
+        compatible_assemblers = [
+            assembler
+            for assembler in config["assemblers"]
+            if sample["technology"] in ASSEMBLER_COMPATIBILITY[assembler]
+        ]
+        if len(compatible_assemblers) == 0:
+            raise ValueError(
+                f"Sample '{sample['name']}' with technology '{sample['technology']}' "
+                "has no compatible assembler in config['assemblers']."
+            )
+
+def get_compatible_sample_assembler_pairs(require_long_reads=False, require_short_reads=False):
+    pairs = []
+    for sample in config["samples"]:
+        sample_name = sample["name"]
+        technology = sample["technology"]
+        if require_long_reads and not sample_name_has_long_reads(sample_name):
+            continue
+        if require_short_reads and not sample_name_has_short_reads(sample_name):
+            continue
+        for assembler in config["assemblers"]:
+            if technology in ASSEMBLER_COMPATIBILITY[assembler]:
+                pairs.append({"sample": sample_name, "assembler": assembler})
+    return pairs
+
+def compatible_expand(pattern, require_long_reads=False, require_short_reads=False):
+    pairs = get_compatible_sample_assembler_pairs(require_long_reads, require_short_reads)
+    return expand(
+        pattern,
+        zip,
+        sample=[p["sample"] for p in pairs],
+        assembler=[p["assembler"] for p in pairs],
+    )
+
+def compatible_fraction_expand(pattern, require_long_reads=False, require_short_reads=False):
+    expanded = []
+    for fraction in config["fractions"]:
+        expanded += compatible_expand(
+            pattern.replace("{fraction}", fraction),
+            require_long_reads=require_long_reads,
+            require_short_reads=require_short_reads,
+        )
+    return expanded
+
+def compatible_binner_expand(pattern, require_long_reads=False, require_short_reads=False):
+    expanded = []
+    for binner in config["binners"]:
+        expanded += compatible_expand(
+            pattern.replace("{binner}", binner),
+            require_long_reads=require_long_reads,
+            require_short_reads=require_short_reads,
+        )
+    return expanded
+
+def get_binning_triples():
+    triples = []
+
+    def add_binning_outputs(binning_names, require_long_reads=False, require_short_reads=False):
+        pairs = get_compatible_sample_assembler_pairs(require_long_reads, require_short_reads)
+        for pair in pairs:
+            for binning_name in binning_names:
+                triples.append({
+                    "sample": pair["sample"],
+                    "assembler": pair["assembler"],
+                    "binning": binning_name,
+                })
+
+    if config["binning"]:
+        add_binning_outputs(
+            expand("{binner}_bins_reads_alignement", binner=config["binners"]),
+            require_long_reads=True,
+        )
+    if config["short_read_binning"]:
+        add_binning_outputs(
+            expand("{binner}_bins_short_reads_alignement", binner=config["binners"]),
+            require_short_reads=True,
+        )
+    if config["short_read_cobinning"]:
+        add_binning_outputs(
+            expand("{binner}_bins_cobinning_alignement", binner=config["binners"]),
+            require_long_reads=True,
+            require_short_reads=True,
+        )
+    if config["additional_reads_cobinning"]:
+        add_binning_outputs(
+            expand("{binner}_bins_additional_reads_cobinning_alignement", binner=config["binners"]),
+            require_long_reads=True,
+        )
+
+    return triples
+
+def compatible_binning_expand(pattern):
+    triples = get_binning_triples()
+    return expand(
+        pattern,
+        zip,
+        sample=[t["sample"] for t in triples],
+        assembler=[t["assembler"] for t in triples],
+        binning=[t["binning"] for t in triples],
+    )
+
+def compatible_binning_target_expand(pattern):
+    expanded = []
+    for target_bin in config["kraken2_target_bins"]:
+        for output in compatible_binning_expand(pattern.replace("{target_bin}", str(target_bin))):
+            expanded.append(output)
+    return expanded
+
+validate_sample_technology_config()
 
 # Return the path to the reads of a fraction of an assembly 
 def get_read_path(wildcards) : 
     if(wildcards.fraction == "full") : 
-        return get_sample("read_path", wildcards)
+        return get_long_read_path(wildcards)
     return "outputs/" + wildcards.sample + "/" + wildcards.assembler + "/" + wildcards.fraction + "_reads.fastq"
 
 # Return the path to the reads of all fractions of an assembly 
@@ -86,17 +284,6 @@ def get_fastqc_R2(wildcards):
         return get_short_read("short_reads_2", wildcards)
     return f"outputs/{wildcards.sample}/{wildcards.assembler}/fastqc/{wildcards.fraction}/R2.fastq"
 
-##### Sequencing technology (global) #####
-TECH = config.get("technology", "hifi")
-
-allowed_tech = ["hifi", "ont"]
-if TECH not in allowed_tech:
-    raise ValueError(f"technology must be one of {allowed_tech} (got: {TECH})")
-
-# minimap2 preset for long reads mapping
-LONGREAD_PRESET = "lr:hq" if TECH == "ont" else "map-hifi"
-
-
 ##### Additional rules #####  
 include : "rules/assembly.smk"
 include : "rules/mapping.smk"
@@ -126,62 +313,54 @@ if(config["additional_reads_cobinning"] == True) :
 
 rule all :
     input :
-        expand("outputs/{sample}/{assembler}/assembly.fasta", sample=get_samples("name"), assembler = config["assemblers"]),
+        compatible_expand("outputs/{sample}/{assembler}/assembly.fasta"),
 
         # Read quality analysis (fastqc ou nanoplot, kraken2, kat)
-        expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R1_fastqc.html",
-               sample=get_samples_with_short_reads(),
-               assembler=config["assemblers"],
-               fraction=config["fractions"])
+        compatible_fraction_expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R1_fastqc.html", require_short_reads=True)
             if(config.get("fastqc", False) == True) else "Snakefile",
 
-        expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R2_fastqc.html",
-               sample=get_samples_with_short_reads(),
-               assembler=config["assemblers"],
-               fraction=config["fractions"])
+        compatible_fraction_expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R2_fastqc.html", require_short_reads=True)
             if(config.get("fastqc", False) == True) else "Snakefile",
 
-        expand("outputs/{sample}/{assembler}/nanoplot/{fraction}/NanoPlot-report.html", sample=get_samples("name"), assembler = config["assemblers"], fraction=config["fractions"])
+        compatible_fraction_expand("outputs/{sample}/{assembler}/nanoplot/{fraction}/NanoPlot-report.html", require_long_reads=True)
             if(config.get("nanoplot", False) == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/nanoplot/{fraction}/NanoPlot-report.html", sample=get_samples("name"), assembler = config["assemblers"], fraction=config["fractions"])
-            if(config.get("nanoplot", False) == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/kraken2/{fraction}/krona.html", sample=get_samples("name"), assembler = config["assemblers"], fraction=config["fractions"])
+        compatible_fraction_expand("outputs/{sample}/{assembler}/kraken2/{fraction}/krona.html", require_long_reads=True)
             if(config["kraken2"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/kat/{fraction}-stats.tsv", sample=get_samples("name"), assembler = config["assemblers"], fraction=config["fractions"])
+        compatible_fraction_expand("outputs/{sample}/{assembler}/kat/{fraction}-stats.tsv", require_long_reads=True)
             if(config["kat"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/kat/kat-plot.pdf", sample=get_samples("name"), assembler = config["assemblers"])
+        compatible_expand("outputs/{sample}/{assembler}/kat/kat-plot.pdf", require_long_reads=True)
             if(config["kat"] == True and "mapped" in config["fractions"] and "unmapped" in config["fractions"]) else "Snakefile",
 
         # Contig quality analysis (read mapping, short read mapping, metaquast, reference mapping)
-        expand("outputs/{sample}/{assembler}/reads_on_contigs_mapping_evaluation/report.txt", sample=get_samples("name"), assembler = config["assemblers"])
+        compatible_expand("outputs/{sample}/{assembler}/reads_on_contigs_mapping_evaluation/report.txt", require_long_reads=True)
             if(config["read_mapping_evaluation"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/metaquast/report.txt", sample=get_samples("name"), assembler = config["assemblers"])
+        compatible_expand("outputs/{sample}/{assembler}/metaquast/report.txt")
             if(config["metaquast"] == True and ("abundance_information" in config)) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/metaquast/results/summary/TSV/", sample=get_samples("name"), assembler = config["assemblers"])
+        compatible_expand("outputs/{sample}/{assembler}/metaquast/results/summary/TSV/")
             if(config["metaquast"] == True) else "Snakefile",
         expand("outputs/{sample}/long_reads_on_reference.{reference}.bam", sample=get_samples_with_long_reads(), reference=get_reference_names())
             if(config["reference_mapping_evaluation"] == True) else "Snakefile",
         expand("outputs/{sample}/short_reads_on_reference.{reference}.bam", sample=get_samples_with_short_reads(), reference=get_reference_names())
             if(config["reference_mapping_evaluation"] == True) else "Snakefile", 
-        expand("outputs/{sample}/{assembler}/short_reads_on_contigs.bam", sample=get_samples("name"), assembler=config["assemblers"])
+        compatible_expand("outputs/{sample}/{assembler}/short_reads_on_contigs.bam", require_short_reads=True)
             if(config["short_read_mapping_evaluation"] == True or config["short_read_binning"] == True or config["short_read_cobinning"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/short_reads_on_contigs_mapping_evaluation/report.txt", sample=get_samples_with_short_reads(), assembler=config["assemblers"])
+        compatible_expand("outputs/{sample}/{assembler}/short_reads_on_contigs_mapping_evaluation/report.txt", require_short_reads=True)
             if(config["short_read_mapping_evaluation"] == True) else "Snakefile",
 
         # Bins quality analysis (checkm, separate read and contig quality analysis by bin quality)
-        expand("outputs/{sample}/{assembler}/{binning}/checkm/checkm_report.txt", sample=get_samples("name"), assembler = config["assemblers"], binning=binnings)
+        compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/checkm/checkm_report.txt")
             if(config["checkm"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/{binning}/checkm/checkm-plot.pdf", sample=get_samples("name"), assembler = config["assemblers"], binning=binnings)
+        compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/checkm/checkm-plot.pdf")
             if(config["checkm"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/{binning}/gtdbtk/results/gtdbtk.bac120.summary.tsv", sample=get_samples("name"), assembler = config["assemblers"], binning=binnings)
+        compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/gtdbtk/results/gtdbtk.bac120.summary.tsv")
             if(config["gtdbtk"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/{binning}/kraken2/bin.{target_bin}/krona.html", sample=get_samples("name"), assembler = config["assemblers"], binning=binnings, target_bin=config["kraken2_target_bins"])
+        compatible_binning_target_expand("outputs/{sample}/{assembler}/{binning}/kraken2/bin.{target_bin}/krona.html")
             if(config["kraken2_on_bins"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/{binning}/read_contig_mapping_plot.pdf", sample=get_samples("name"), assembler = config["assemblers"], binning=binnings)
+        compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/read_contig_mapping_plot.pdf")
             if(config["checkm"] == True and config["read_mapping_evaluation"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/{binning}/read_contig_mapping.txt", sample=get_samples("name"), assembler = config["assemblers"], binning=binnings)
+        compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/read_contig_mapping.txt")
             if(config["checkm"] == True and config["read_mapping_evaluation"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping_plot.pdf", sample=get_samples_with_short_reads(), assembler=config["assemblers"], binner=config["binners"])
+        compatible_binner_expand("outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping_plot.pdf", require_short_reads=True)
             if(config["checkm"] == True and config["short_read_binning"] == True) else "Snakefile",
-        expand("outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping.txt", sample=get_samples_with_short_reads(), assembler=config["assemblers"], binner=config["binners"])
+        compatible_binner_expand("outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping.txt", require_short_reads=True)
             if(config["checkm"] == True and config["short_read_binning"] == True) else "Snakefile",

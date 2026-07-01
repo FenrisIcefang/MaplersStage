@@ -32,7 +32,7 @@ if(config["read_mapping_evaluation"]) :
             output_directory="outputs/{sample}/{assembler}/",
             threshold = config["read_mapping_threshold"]
         input :
-            reads = lambda wildcards: get_sample("read_path", wildcards),
+            reads = get_long_read_path,
             mapping = "outputs/{sample}/{assembler}/{reference_reads}_on_contigs.bam",
         threads : config["rule_read_contig_mapping_evaluation"]["threads"]
         resources :

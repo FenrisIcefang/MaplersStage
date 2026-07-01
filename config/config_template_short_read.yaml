@@ -1,12 +1,5 @@
 analysis_name: name_log # Used to name the logs files
 
-##### Sequencing technology #####
-# Type of supplementary long reads used with metaSPAdes.
-# Options: "hifi" (PacBio HiFi) or "ont" (Oxford Nanopore).
-# If no long reads are provided, keep a value here (for example "ont")
-# and set read_path: to "none" in the sample.
-technology: none
-
 ##### Inputs #####
 ### Samples ###
 # short reads used for metagenomic assembly
@@ -14,6 +7,7 @@ technology: none
 # If no long reads are available, YOU MUST set read_path: to "none", otherwise the pipeflow will break
 samples:
  - name: sample_name
+   technology: illumina
    short_reads_1: /path/to/short_reads_1.fastq 
    short_reads_2: /path/to/short_reads_2.fastq
    read_path: none

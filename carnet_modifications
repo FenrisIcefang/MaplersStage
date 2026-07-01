@@ -1,0 +1,43 @@
+Carnet des modifications locales
+
+- Deplacement de la technologie dans chaque sample de configuration.
+  Raison: permettre un meme lancement Mapler avec des samples de technologies differentes, par exemple ONT, HiFi et Illumina dans le meme fichier YAML.
+
+- Ajout d'une table ASSEMBLER_COMPATIBILITY dans le Snakefile.
+  Raison: centraliser la compatibilite entre technologies et assembleurs, afin d'eviter que rule all demande des combinaisons impossibles comme metaspades avec un sample HiFi ou metaMDBG avec un sample Illumina.
+
+- Ajout de fonctions de validation dans le Snakefile.
+  Raison: arreter le pipeline tot avec un message clair si un sample n'a pas de technology, si une technology est inconnue, si un assembler n'est pas declare dans la table de compatibilite, ou si un sample n'a aucun assembler compatible.
+
+- Ajout de fonctions pour construire les couples compatibles sample/assembler.
+  Raison: remplacer le produit cartesien global sample x assembler par une liste filtree qui contient seulement les combinaisons autorisees.
+
+- Modification de rule all pour utiliser les couples compatibles.
+  Raison: eviter que Snakemake essaie de produire des sorties pour des combinaisons incompatibles, tout en gardant assemblers comme parametre global dans la config.
+
+- Separation logique des sorties long reads et short reads dans rule all.
+  Raison: certaines sorties dependent de read_path et ne doivent etre demandees que pour les samples HiFi/ONT, tandis que les sorties short reads doivent etre demandees seulement pour les samples qui possedent short_reads_1 et short_reads_2.
+
+- Ajout de get_sample_technology, get_long_read_path, get_optional_long_read_path et get_longread_preset.
+  Raison: remplacer les anciennes variables globales TECH et LONGREAD_PRESET par des valeurs calculees a partir du sample courant.
+
+- Adaptation des regles d'assemblage.
+  Raison: les wrappers metaMDBG, metaflye, myloasm et metaspades recoivent maintenant une technologie dependante du sample; les assembleurs long-read utilisent aussi un helper qui refuse read_path: none.
+
+- Correction locale de l'appel myloasm qui utilisait {config[technology]}.
+  Raison: cette syntaxe dependait d'une variable globale et pouvait casser; elle est remplacee par {params.technology}.
+
+- Adaptation des regles de mapping long-read.
+  Raison: le preset minimap2 est maintenant choisi sample par sample, par exemple map-hifi pour HiFi et lr:hq pour ONT.
+
+- Activation du mapping short-read quand FastQC utilise des fractions mapped/unmapped.
+  Raison: les fichiers FastQC fractionnes pour les short reads dependent de short_reads_on_contigs.bam; la regle qui produit ce BAM doit donc exister quand fastqc est active.
+
+- Adaptation de certaines regles d'evaluation qui lisaient directement read_path.
+  Raison: rendre explicite que ces regles utilisent des long reads et eviter qu'un sample Illumina avec read_path: none soit traite comme un sample long-read.
+
+- Mise a jour des fichiers config_template.yaml, config_template_short_read.yaml, config_test.yaml et config_test_evaluation_only.yaml.
+  Raison: aligner les exemples et configs de test avec le nouveau format ou technology est defini dans chaque sample.
+
+- Aucun commit et aucun push n'ont ete effectues.
+  Raison: respecter la regle de travail locale; toute action git de commit ou push necessite une permission explicite.

@@ -13,6 +13,7 @@ analysis_name: test # Used to name the logs files
 # long reads used for assembly and evaluation
 samples: 
  - name: test_dataset
+   technology: hifi
    read_path: test/test_dataset.fastq
 
 # (optional), short reads, may be used for binning or evaluation. Should be from the same sample as the long reads
