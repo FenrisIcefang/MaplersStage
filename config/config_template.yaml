@@ -1,4 +1,4 @@
-analysis_name: test_1_technology # Used to name the logs files
+analysis_name: test_1_technology_sample # Used to name the logs files
 
 ##### Inputs #####
 ### Samples ###
@@ -7,7 +7,17 @@ analysis_name: test_1_technology # Used to name the logs files
 samples: 
  - name: hifi_1%
    technology: hifi
-   read_path: /path/to/reads.fastq
+   read_path: /projects/genscale/amashi/data/raw/hifi/zymoD6331_sub1.fastq
+ 
+ - name: ont_1%
+   technology: ont
+   read_path: /projects/genscale/amashi/data/raw/ont/PAY12289_barcode13_sub1_match.fastq.gz
+
+ - name: illumina_1%
+   technology: illumina
+   short_reads_1: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R1.fastq.gz 
+   short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
+   read_path: none
 
 # (optional), short reads, may be used for binning or evaluation. Should be from the same sample as the long reads
 #short_reads_1: /path/to/short_reads_1.fastq
@@ -45,10 +55,11 @@ assemblers: # uncomment assemblers to use them
  - metaMDBG
  - metaflye
  - hifiasm_meta
+ - metaspades
 # - operaMS # requires short_read_assembly and operaMS_path, performs a hybrid assembly
 # - custom_assembly # requires custom_assembly_path
 
-short_read_binning: false # requires short_reads_1 and short_reads_2
+short_read_binning: true # requires short_reads_1 and short_reads_2
 short_read_cobinning: false # requires short_reads_1 and short_reads_2, uses both short and long reads for binning
 additional_reads_cobinning: false # requires at least one additional_reads, uses both the long reads, and all additional reads for binning
 
@@ -61,7 +72,7 @@ binners: # uncomment binners to use them
 # contig analysis
 metaquast: false # requires reference_genomes
 read_mapping_evaluation: true 
-short_read_mapping_evaluation: false # requires short_reads_1 and short_reads_2
+short_read_mapping_evaluation: true # requires short_reads_1 and short_reads_2
 reference_mapping_evaluation: false # requires reference_genomes
 
 # bins analysis
@@ -77,9 +88,9 @@ fractions:
 #  - full #all reads
   - mapped #reads that mapped to a contig, and were sucessfully assembled
   - unmapped #reads that are not mapped to a contig
-fastqc: true 
-kraken2: true # requires kraken2db
-kat: true
+fastqc: false 
+kraken2: false # requires kraken2db
+kat: false
 
 ##### Parameters #####
 ### Functional parameters ###
@@ -90,93 +101,101 @@ metaquast_min_identity: 95
 
 # Mapping
 rules_mapping: 
-  threads: 24
-  memory: 50000 
-  time: 1*24*60 #in minutes
+  threads: 8
+  memory: 16000 
+  time: 6*60 #in minutes
+
 
 # Assembly 
 rule_metaMDBG_assembly: 
-  threads: 48
-  memory: 35000 
-  time: 2*24*60 #in minutes
+  threads: 16
+  memory: 20000 
+  time: 8*60 #in minutes
 
 rule_metaflye_assembly: 
-  threads: 48
-  memory: 160000 
-  time: 1*24*60 #in minutes
+  threads: 16
+  memory: 40000 
+  time: 12*60 #in minutes
 
 rule_hifiasm_meta_assembly: 
-  threads: 48
-  memory: 160000 
-  time: 2*24*60 #in minutes
+  threads: 16
+  memory: 50000 
+  time: 12*60 #in minutes
 
 rule_operaMS_assembly: 
-  threads: 48
-  memory: 100000 
-  time: 5*24*60 #in minutes
+  threads: 16
+  memory: 50000 
+  time: 24*60 #in minutes
+
+rule_metaspades_assembly:
+  threads: 16
+  memory: 50000
+  time: 12*60 #in minutes
+
 
 # Binning
 rules_metabat2_binnings: 
-  threads: 16
-  memory: 20000 
-  time: 12*60 #in minutes
+  threads: 8
+  memory: 12000 
+  time: 4*60 #in minutes
+
 
 # Contig quality analysis
 rule_metaquast: 
   threads: 1
-  memory: 20000 
-  time: 24*60 #in minutes
+  memory: 12000 
+  time: 8*60 #in minutes
 
-rule_read_contig_mapping_evaluation :
+rule_read_contig_mapping_evaluation:
   threads: 1
-  memory: 10000 
-  time: 2*60 #in minutes
+  memory: 5000 
+  time: 1*60 #in minutes
 
 
 # Bin quality analysis
 rule_checkm: 
-  threads: 16
-  memory: 50000 
-  time: 24*60 #in minutes
+  threads: 8
+  memory: 30000 
+  time: 8*60 #in minutes
 
 rule_checkm_report_writer: 
   threads: 1
-  memory: 50000 
+  memory: 5000 
   time: 1*60 #in minutes
 
 rule_kraken2_on_bins: 
-  threads: 12
-  memory: 100000 
-  time: 4*60 #in minutes
+  threads: 8
+  memory: 50000 
+  time: 2*60 #in minutes
 
 rule_gtdbtk_on_bins: 
-  threads: 20
-  memory: 100000 
-  time: 8*60 #in minutes
+  threads: 12
+  memory: 60000 
+  time: 4*60 #in minutes
 
 rule_read_contig_mapping_plot:
   threads: 1
-  memory: 30000 
-  time: 2*60 #in minutes
+  memory: 8000 
+  time: 1*60 #in minutes
 
-  
-# read quality analysis 
+
+# Read quality analysis 
 rule_extract_unmapped_reads: 
-  threads: 24
-  memory: 50000 
-  time: 24*60 #in minutes
+  threads: 8
+  memory: 16000 
+  time: 4*60 #in minutes
 
 rule_kraken2: 
-  threads: 12
-  memory: 100000 
-  time: 4*60 #in minutes
+  threads: 8
+  memory: 50000 
+  time: 2*60 #in minutes
 
 rule_kat_sect: 
-  threads: 12
-  memory: 200000 
-  time: 4*60 #in minutes
+  threads: 8
+  memory: 60000 
+  time: 2*60 #in minutes
 
 rule_fastqc: 
   threads: 1
   memory: 5000 
-  time: 2*60 #in minutes
+  time: 1*60 #in minutes

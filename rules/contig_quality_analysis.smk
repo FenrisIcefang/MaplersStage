@@ -25,7 +25,6 @@ if(config["metaquast"] and "abundance_information" in config) :
 
 
 if(config["read_mapping_evaluation"]) :
-    # mapping reads on contigs should be flexible to either use long or short reads
     rule read_contig_mapping_evaluation : 
         params : 
             expand("{sample}", sample=get_samples("name")),
@@ -34,6 +33,8 @@ if(config["read_mapping_evaluation"]) :
         input :
             reads = get_long_read_path,
             mapping = "outputs/{sample}/{assembler}/{reference_reads}_on_contigs.bam",
+        wildcard_constraints:
+            reference_reads="reads|mapped_reads|unmapped_reads"
         threads : config["rule_read_contig_mapping_evaluation"]["threads"]
         resources :
             cpus_per_task = config["rule_read_contig_mapping_evaluation"]["threads"],

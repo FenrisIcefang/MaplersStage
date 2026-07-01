@@ -58,6 +58,8 @@ if(config["checkm"] and config["binning"]) :
         output: 
             plot="outputs/{sample}/{assembler}/{binning}/read_contig_mapping_plot.pdf",
             text="outputs/{sample}/{assembler}/{binning}/read_contig_mapping.txt"
+        wildcard_constraints:
+            binning="[^/]+_bins_(reads|cobinning|additional_reads_cobinning)_alignement"
         shell: "python3 sources/bin_quality_analysis/reads_on_contigs_mapping_plot.py {input.checkm_report} {input.bins_directory} {input.reads_on_contigs_alignment} {input.reads} {output.plot} {output.text}"
 
 rule kronadb_download:

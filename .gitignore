@@ -4,3 +4,4 @@ slurm-*.out
 .snakemake/
 test/
 scripts_travail/
+carnet_modifications/
