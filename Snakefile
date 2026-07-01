@@ -146,6 +146,25 @@ def validate_sample_technology_config():
                 f"Assembler '{assembler}' is not listed in ASSEMBLER_COMPATIBILITY."
             )
 
+    for assembler in config["assemblers"]:
+        compatible_samples = [
+            sample["name"]
+            for sample in config["samples"]
+            if sample["technology"] in ASSEMBLER_COMPATIBILITY[assembler]
+        ]
+
+        if len(compatible_samples) == 0:
+            sample_tech_summary = [
+                f"{sample['name']}={sample['technology']}"
+                for sample in config["samples"]
+            ]
+
+            raise ValueError(
+                f"Assembler '{assembler}' has no compatible sample in this config.\n"
+                f"  Compatible technologies for '{assembler}': {ASSEMBLER_COMPATIBILITY[assembler]}\n"
+                f"  Sample technologies found: {sample_tech_summary}"
+            )
+            
     if config["short_read_binning"]:
         configured_short_read_assemblers = [
             assembler
