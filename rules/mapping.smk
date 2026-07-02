@@ -97,8 +97,8 @@ if(config['reference_mapping_evaluation']) :
             runtime=eval(config["rules_mapping"]["time"]),
         shell : "./sources/mapping.sh {output} {input.R1} {input.reference} sr {input.R2} {threads}"
 
-
-    rule contigs_on_reference_mapping : 
+if(config.get("contigs_on_reference_mapping", False)) :
+    rule contigs_on_reference_mapping :
         input :
             assembly = "outputs/{sample}/{assembler}/assembly.fasta",
             reference = lambda wildcards: get_reference(wildcards.reference_name)

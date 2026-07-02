@@ -223,6 +223,27 @@ def validate_binning_config():
                 f"{missing_short_reads}."
             )
 
+def validate_reference_config():
+    reference_options = [
+        "metaquast",
+        "reference_mapping_evaluation",
+        "contigs_on_reference_mapping",
+    ]
+
+    enabled_reference_options = [
+        option for option in reference_options
+        if config.get(option, False)
+    ]
+
+    if len(enabled_reference_options) > 0:
+        if not config.get("reference_genomes"):
+            raise ValueError(
+                "Reference-based evaluation is enabled but "
+                "config['reference_genomes'] is missing or empty.\n"
+                f"Enabled options: {enabled_reference_options}\n"
+                "Please define reference_genomes in the config."
+            )
+
 def validate_sample_technology_config():
     for sample in config["samples"]:
         sample_name = sample.get("name", "<missing name>")
@@ -319,6 +340,19 @@ def compatible_expand(pattern, require_long_reads=False, require_short_reads=Fal
         sample=[p["sample"] for p in pairs],
         assembler=[p["assembler"] for p in pairs],
     )
+
+def compatible_reference_expand(pattern, require_long_reads=False, require_short_reads=False, allowed_assemblers=None):
+    expanded = []
+
+    for reference in get_reference_names():
+        expanded += compatible_expand(
+            pattern.replace("{reference}", reference),
+            require_long_reads=require_long_reads,
+            require_short_reads=require_short_reads,
+            allowed_assemblers=allowed_assemblers,
+        )
+
+    return expanded
 
 def compatible_fraction_expand(pattern, require_long_reads=False, require_short_reads=False, allowed_assemblers=None):
     expanded = []
@@ -424,6 +458,7 @@ def compatible_binning_target_expand(pattern):
 
 validate_sample_technology_config()
 validate_binning_config()
+validate_reference_config()
 
 # Return the path to the reads of a fraction of an assembly 
 def get_read_path(wildcards) : 
@@ -504,6 +539,8 @@ rule all :
             if(config["reference_mapping_evaluation"] == True) else "Snakefile",
         expand("outputs/{sample}/short_reads_on_reference.{reference}.bam", sample=get_samples_with_short_reads(), reference=get_reference_names())
             if(config["reference_mapping_evaluation"] == True) else "Snakefile", 
+        compatible_reference_expand("outputs/{sample}/{assembler}/contigs_on_reference.{reference}.bam")
+            if(config.get("contigs_on_reference_mapping", False) == True) else "Snakefile",
         compatible_short_read_mapping_expand("outputs/{sample}/{assembler}/short_reads_on_contigs.bam")
             if(
                 config["short_read_mapping_evaluation"] == True
