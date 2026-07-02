@@ -10,19 +10,18 @@ def get_sample(attribute, wildcards):
     index = get_samples("name").index(wildcards.sample)
     return get_samples(attribute)[index]
 
-# Return short reads either from the sample section or from global config
+# Return short reads from the sample section only.
 def get_short_read(attribute, wildcards):
-    index = get_samples("name").index(wildcards.sample)
-    sample = config["samples"][index]
+    sample = get_config_sample(wildcards.sample)
 
     if attribute in sample:
         return sample[attribute]
-    elif attribute in config:
-        return config[attribute]
-    else:
-        raise ValueError(
-            f"{attribute} not found neither in sample '{wildcards.sample}' nor in global config"
-        )
+
+    raise ValueError(
+        f"{attribute} not found in sample '{wildcards.sample}'. "
+        "In the strict sample model, short_reads_1 and short_reads_2 must be "
+        "defined inside illumina samples only."
+    )
 def sample_has_long_reads(wildcards):
     return sample_name_has_long_reads(wildcards.sample)
 
@@ -40,11 +39,12 @@ def sample_name_has_long_reads(sample_name):
 def sample_name_has_short_reads(sample_name):
     sample = get_config_sample(sample_name)
 
-    if "short_reads_1" in sample and "short_reads_2" in sample:
-        return True
-    elif "short_reads_1" in config and "short_reads_2" in config:
-        return True
-    return False
+    return (
+        "short_reads_1" in sample
+        and "short_reads_2" in sample
+        and sample["short_reads_1"] != "none"
+        and sample["short_reads_2"] != "none"
+    )
 
 def get_samples_with_long_reads():
     out = []
@@ -472,19 +472,6 @@ include : "rules/contig_quality_analysis.smk"
 replace minimap2 by mapquick for hifi long reads mapping ?
 replace kraken2 by sourmash for taxonomic assignation ?
 """
-
-
-binnings = []
-if(is_binning_enabled() and long_read_binning_enabled()) :
-    binnings += expand("{binner}_bins_reads_alignement", binner = get_configured_binners())
-if(is_binning_enabled() and short_read_binning_enabled()) :
-    binnings += expand("{binner}_bins_short_reads_alignement", binner = get_configured_binners())
-if(is_binning_enabled() and short_read_cobinning_enabled()) :
-    binnings += expand("{binner}_bins_cobinning_alignement", binner = get_configured_binners())
-if(is_binning_enabled() and additional_reads_cobinning_enabled()) :
-    binnings += expand("{binner}_bins_additional_reads_cobinning_alignement", binner = get_configured_binners())
-
-
 
 rule all :
     input :

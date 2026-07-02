@@ -24,11 +24,13 @@ samples:
    read_path: none
 
 
-# (optional), short read assembly, may be used for assembly. Should be from the same sample as the long reads
+# (Optional) legacy/hybrid option used by OPERA-MS only. Should be from the same sample as the long reads.
+#            This is a pre-assembled short-read contig file passed to OPERA-MS. It is not used by metaspades, short_read_binning, or short_read_mapping_evaluation.
+#            This option should be reviewed later with the future hybrid assembler model.
 #short_read_assembly: /path/to/short_read_assembly.fasta
 
-# (optional), long reads used for cobinning. Should be from a similar sample as the studied sample
-#additional_reads: 
+# (optional), Additional long-read datasets used only for additional_reads_cobinning. These reads are not used for assembly. 
+#             They are mapped to the contigs of the studied sample and used as extra coverage profiles for MetaBAT2. 
 # - name: sample_name
 #   path: /path/to/reads.fastq
 
@@ -62,7 +64,7 @@ assemblers: # uncomment assemblers to use them
  - metaflye
  - hifiasm_meta
  - metaspades
-# - operaMS # requires short_read_assembly and operaMS_path, performs a hybrid assembly
+# - operaMS # legacy hybrid assembler; requires long reads plus associated short-read inputs. To be refactored later.
 # - custom_assembly # requires custom_assembly_path
 
 ### Binning ###
@@ -71,8 +73,7 @@ assemblers: # uncomment assemblers to use them
 binning: true
 
 # Binners create bins/MAGs from contigs and read coverage.
-# Currently supported:
-# - metabat2
+# Currently supported: metabat2
 binners:
   - metabat2
 
@@ -106,7 +107,7 @@ additional_reads_cobinning: false
 # contig analysis
 metaquast: false # requires reference_genomes
 read_mapping_evaluation: true 
-short_read_mapping_evaluation: true # requires short_reads_1 and short_reads_2
+short_read_mapping_evaluation: true # requires at least one illumina sample with short_reads_1 and short_reads_2
 reference_mapping_evaluation: false # requires reference_genomes
 
 # bins analysis
