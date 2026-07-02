@@ -153,7 +153,7 @@ outputs
         ├── reads_on_contigs.bam
         ├── reads_on_contigs.bam.bai
         ├── reads_on_reference.<reference>.bam # Multiple choices in the reference_genomes field. Requires reference_mapping_evaluation:true
-        ├── contigs_on_reference.<reference>.bam # Multiple choices in the reference_genomes field. Requires reference_mapping_evaluation:true
+        ├── contigs_on_reference.<reference>.bam # Multiple choices in the reference_genomes field. Requires contigs_on_reference_mapping:true
         └──  reads_on_contigs_mapping_evaluation # Requires read_mapping_evaluation: true
             └── report.txt
 ```
@@ -282,5 +282,4 @@ Additionally, minimap2, pysam, biopython, pandas, matplotlib and numpy were used
 
 ## Citation
    Nicolas Maurice, Claire Lemaitre, Riccardo Vicedomini, Clémence Frioux, [Mapler: a pipeline for assessing assembly quality in taxonomically rich metagenomes sequenced with HiFi reads](https://academic.oup.com/bioinformatics/article/41/6/btaf334/8157874), Bioinformatics (2025)
-
 
