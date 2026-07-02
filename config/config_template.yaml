@@ -3,7 +3,11 @@ analysis_name: test_1_technology_sample # Used to name the logs files
 ##### Inputs #####
 ### Samples ###
 # technology options: hifi, ont, illumina
-# long reads use read_path; illumina samples use read_path: none and short_reads_1/short_reads_2
+# Sample model:
+# - hifi and ont samples must define read_path only.
+# - illumina samples must define read_path: none and short_reads_1/short_reads_2.
+# - Do not define short_reads_1/short_reads_2 inside hifi or ont samples.
+
 samples: 
  - name: hifi_1%
    technology: hifi
@@ -19,9 +23,7 @@ samples:
    short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
    read_path: none
 
-# (optional), short reads, may be used for binning or evaluation. Should be from the same sample as the long reads
-#short_reads_1: /path/to/short_reads_1.fastq
-#short_reads_2: /path/to/short_reads_2.fastq
+
 # (optional), short read assembly, may be used for assembly. Should be from the same sample as the long reads
 #short_read_assembly: /path/to/short_read_assembly.fasta
 
@@ -30,9 +32,12 @@ samples:
 # - name: sample_name
 #   path: /path/to/reads.fastq
 
-# (optional), used for evaluation
-#reference_genomes: 
-#- /path/to/reference_genome.fasta
+# Optional: reference genomes used for reference-based evaluation.
+# Used by MetaQUAST and reference_mapping_evaluation.
+#reference_genomes:
+#  - /path/to/reference_genome_1.fasta
+#  - /path/to/reference_genome_2.fasta
+
 # (optional), used for evaluation a csv with every line following the template "reference_genome_name, group". The names must be the same as the reference genomes files (without the path and extentions), and the groups are arbitrary
 #abundance_information: /path/to/abundance.csv #
 
@@ -50,7 +55,8 @@ checkm_database: outputs/CheckM2_database/uniref100.KO.1.dmnd #if it doesn't exi
 
 
 ##### Controls #####
-### Assembly and binning ###
+### Assembly ###
+# Assemblers create contigs/assembly.fasta.
 assemblers: # uncomment assemblers to use them
  - metaMDBG
  - metaflye
@@ -59,14 +65,42 @@ assemblers: # uncomment assemblers to use them
 # - operaMS # requires short_read_assembly and operaMS_path, performs a hybrid assembly
 # - custom_assembly # requires custom_assembly_path
 
-short_read_binning: true # requires short_reads_1 and short_reads_2
-short_read_cobinning: false # requires short_reads_1 and short_reads_2, uses both short and long reads for binning
-additional_reads_cobinning: false # requires at least one additional_reads, uses both the long reads, and all additional reads for binning
-
+### Binning ###
+# Global switch for all binning analyses.
+# If false, no binning mode is run.
 binning: true
-binners: # uncomment binners to use them
+
+# Binners create bins/MAGs from contigs and read coverage.
+# Currently supported:
+# - metabat2
+binners:
   - metabat2
-# - custom # requires custom_bins_path
+
+# Binning modes decide which read coverage is used:
+# - long_read_binning: main long reads on contigs
+# - short_read_binning: Illumina reads on metaspades assemblies
+# - short_read_cobinning: long + short read coverage, legacy/hybrid mode
+# - additional_reads_cobinning: main long reads + additional long-read datasets
+#
+# long_read_binning uses:
+#   outputs/{sample}/{assembler}/reads_on_contigs.bam
+#
+# short_read_binning uses:
+#   outputs/{sample}/{assembler}/short_reads_on_contigs.bam
+# Requires:
+#   - at least one sample with technology: illumina
+#   - short_reads_1 and short_reads_2 defined in that illumina sample
+#   - a short-read assembler, currently metaspades
+#   - metabat2 listed in binners
+#
+# short_read_cobinning is kept as a legacy/hybrid mode and should remain
+# disabled by default until reviewed with the strict technology model.
+#
+# additional_reads_cobinning requires additional_reads to be defined.
+long_read_binning: true
+short_read_binning: true
+short_read_cobinning: false
+additional_reads_cobinning: false
 
 ### Evaluation ###
 # contig analysis

@@ -42,7 +42,7 @@ if(config["checkm"]) :
         conda : "../envs/python.yaml"
         shell : "python3 sources/bin_quality_analysis/checkm_plot.py {input} {output}"
 
-if(config["checkm"] and config["binning"]) :
+if(config["checkm"] and long_read_mapping_plot_enabled()) :
     rule read_contig_mapping_plot: 
         input:
             checkm_report = "outputs/{sample}/{assembler}/{binning}/checkm/quality_report.tsv",
@@ -102,7 +102,7 @@ if(config["gtdbtk"]) :
         output: "outputs/{sample}/{assembler}/{binning}/gtdbtk/results/gtdbtk.bac120.summary.tsv"
         shell: "./sources/bin_quality_analysis/gtdbtk_wraper.sh {params.output_directory} {params.gtdbtk_database} {params.mash_database} {input.bins}"
 
-if(config["checkm"] and config["short_read_binning"]):
+if(config["checkm"] and is_binning_enabled() and short_read_binning_enabled()):
     rule short_read_contig_mapping_plot:
         input:
             checkm_report="outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/checkm/quality_report.tsv",

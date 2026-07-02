@@ -15,7 +15,11 @@ rule reads_on_contigs_mapping :
         runtime=eval(config["rules_mapping"]["time"]),
     shell : "./sources/mapping.sh {output} {input.reads} {input.assembly} {params.preset} '' {threads}"
 
-if(config["short_read_binning"] or config["short_read_cobinning"] or config["short_read_mapping_evaluation"] or config.get("fastqc", False)) :
+if(
+    (is_binning_enabled() and (short_read_binning_enabled() or short_read_cobinning_enabled()))
+    or config["short_read_mapping_evaluation"]
+    or config.get("fastqc", False)
+) :
     rule short_reads_on_contigs_mapping : 
         params : 
             expand("{sample}", sample=get_samples("name")),
@@ -41,7 +45,7 @@ def get_additional_read_path(wildcards):
     if(len(path) == 1) : 
         return path
 
-if(config["additional_reads_cobinning"]) :
+if(is_binning_enabled() and additional_reads_cobinning_enabled()) :
     rule additional_reads_on_contigs_mapping : 
         params : 
             additional_reads = config["additional_reads"],

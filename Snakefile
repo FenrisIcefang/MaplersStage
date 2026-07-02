@@ -74,6 +74,49 @@ ASSEMBLER_COMPATIBILITY = {
 
 ALLOWED_TECHNOLOGIES = ["hifi", "ont", "illumina"]
 SHORT_READ_ASSEMBLERS = ["metaspades"]
+ALLOWED_BINNERS = ["metabat2"]
+BINNING_MODE_KEYS = [
+    "long_read_binning",
+    "short_read_binning",
+    "short_read_cobinning",
+    "additional_reads_cobinning",
+]
+
+def get_configured_binners():
+    return config.get("binners", [])
+
+def is_binning_enabled():
+    return config.get("binning", False)
+
+def long_read_binning_enabled():
+    return config.get("long_read_binning", is_binning_enabled())
+
+def short_read_binning_enabled():
+    return config.get("short_read_binning", False)
+
+def short_read_cobinning_enabled():
+    return config.get("short_read_cobinning", False)
+
+def additional_reads_cobinning_enabled():
+    return config.get("additional_reads_cobinning", False)
+
+def any_binning_mode_enabled():
+    return (
+        long_read_binning_enabled()
+        or short_read_binning_enabled()
+        or short_read_cobinning_enabled()
+        or additional_reads_cobinning_enabled()
+    )
+
+def long_read_mapping_plot_enabled():
+    return (
+        is_binning_enabled()
+        and (
+            long_read_binning_enabled()
+            or short_read_cobinning_enabled()
+            or additional_reads_cobinning_enabled()
+        )
+    )
 
 def get_sample_technology(wildcards):
     return get_sample("technology", wildcards)
@@ -108,6 +151,77 @@ def get_metaspades_long_read_technology(wildcards):
     if tech == "ont":
         return "ont"
     return "none"
+
+def validate_binning_config():
+    if any_binning_mode_enabled() and not is_binning_enabled():
+        raise ValueError(
+            "At least one binning mode is enabled, but binning is false.\n"
+            "Set binning: true or disable all binning modes."
+        )
+
+    if is_binning_enabled() and not any_binning_mode_enabled():
+        raise ValueError(
+            "binning is enabled but no binning mode is enabled.\n"
+            f"Enable at least one of: {', '.join(BINNING_MODE_KEYS)}."
+        )
+
+    if is_binning_enabled():
+        binners = get_configured_binners()
+        if len(binners) == 0:
+            raise ValueError(
+                "binning is enabled but no binner is listed in config['binners']."
+            )
+
+        unknown_binners = [
+            binner for binner in binners if binner not in ALLOWED_BINNERS
+        ]
+        if len(unknown_binners) > 0:
+            raise ValueError(
+                f"Unknown binner(s): {unknown_binners}.\n"
+                f"Allowed binners are: {ALLOWED_BINNERS}."
+            )
+
+    if is_binning_enabled() and short_read_binning_enabled():
+        binners = get_configured_binners()
+        if "metabat2" not in binners:
+            raise ValueError(
+                "short_read_binning is enabled but metabat2 is not listed in "
+                "config['binners']."
+            )
+
+        configured_short_read_assemblers = [
+            assembler
+            for assembler in config["assemblers"]
+            if assembler in SHORT_READ_ASSEMBLERS
+        ]
+        if len(configured_short_read_assemblers) == 0:
+            raise ValueError(
+                "short_read_binning is enabled but no short-read assembler is "
+                f"listed in config['assemblers']. Add one of: {SHORT_READ_ASSEMBLERS}."
+            )
+
+        illumina_samples = [
+            sample for sample in config["samples"]
+            if sample.get("technology") == "illumina"
+        ]
+        if len(illumina_samples) == 0:
+            raise ValueError(
+                "short_read_binning is enabled but no illumina sample is defined.\n"
+                "Add a sample with technology: illumina and "
+                "short_reads_1/short_reads_2."
+            )
+
+        missing_short_reads = [
+            sample.get("name", "<missing name>")
+            for sample in illumina_samples
+            if "short_reads_1" not in sample or "short_reads_2" not in sample
+        ]
+        if len(missing_short_reads) > 0:
+            raise ValueError(
+                "short_read_binning requires short_reads_1 and short_reads_2 "
+                "inside each illumina sample. Missing for sample(s): "
+                f"{missing_short_reads}."
+            )
 
 def validate_sample_technology_config():
     for sample in config["samples"]:
@@ -165,18 +279,6 @@ def validate_sample_technology_config():
                 f"  Sample technologies found: {sample_tech_summary}"
             )
             
-    if config["short_read_binning"]:
-        configured_short_read_assemblers = [
-            assembler
-            for assembler in config["assemblers"]
-            if assembler in SHORT_READ_ASSEMBLERS
-        ]
-        if len(configured_short_read_assemblers) == 0:
-            raise ValueError(
-                "short_read_binning is enabled but no short-read assembler is "
-                f"listed in config['assemblers']. Add one of: {SHORT_READ_ASSEMBLERS}."
-            )
-
     for sample in config["samples"]:
         compatible_assemblers = [
             assembler
@@ -231,7 +333,7 @@ def compatible_fraction_expand(pattern, require_long_reads=False, require_short_
 
 def compatible_binner_expand(pattern, require_long_reads=False, require_short_reads=False, allowed_assemblers=None):
     expanded = []
-    for binner in config["binners"]:
+    for binner in get_configured_binners():
         expanded += compatible_expand(
             pattern.replace("{binner}", binner),
             require_long_reads=require_long_reads,
@@ -249,9 +351,11 @@ def compatible_short_read_assembler_expand(pattern):
 
 def compatible_short_read_mapping_expand(pattern):
     expanded = []
-    if config["short_read_mapping_evaluation"] or config["short_read_cobinning"]:
+    if config["short_read_mapping_evaluation"] or (
+        is_binning_enabled() and short_read_cobinning_enabled()
+    ):
         expanded += compatible_expand(pattern, require_short_reads=True)
-    if config["short_read_binning"]:
+    if is_binning_enabled() and short_read_binning_enabled():
         expanded += compatible_short_read_assembler_expand(pattern)
     return list(dict.fromkeys(expanded))
 
@@ -272,26 +376,30 @@ def get_binning_triples(include_short_read_binning=True):
                     "binning": binning_name,
                 })
 
-    if config["binning"]:
+    if is_binning_enabled() and long_read_binning_enabled():
         add_binning_outputs(
-            expand("{binner}_bins_reads_alignement", binner=config["binners"]),
+            expand("{binner}_bins_reads_alignement", binner=get_configured_binners()),
             require_long_reads=True,
         )
-    if include_short_read_binning and config["short_read_binning"]:
+    if (
+        include_short_read_binning
+        and is_binning_enabled()
+        and short_read_binning_enabled()
+    ):
         add_binning_outputs(
-            expand("{binner}_bins_short_reads_alignement", binner=config["binners"]),
+            expand("{binner}_bins_short_reads_alignement", binner=get_configured_binners()),
             require_short_reads=True,
             allowed_assemblers=SHORT_READ_ASSEMBLERS,
         )
-    if config["short_read_cobinning"]:
+    if is_binning_enabled() and short_read_cobinning_enabled():
         add_binning_outputs(
-            expand("{binner}_bins_cobinning_alignement", binner=config["binners"]),
+            expand("{binner}_bins_cobinning_alignement", binner=get_configured_binners()),
             require_long_reads=True,
             require_short_reads=True,
         )
-    if config["additional_reads_cobinning"]:
+    if is_binning_enabled() and additional_reads_cobinning_enabled():
         add_binning_outputs(
-            expand("{binner}_bins_additional_reads_cobinning_alignement", binner=config["binners"]),
+            expand("{binner}_bins_additional_reads_cobinning_alignement", binner=get_configured_binners()),
             require_long_reads=True,
         )
 
@@ -315,6 +423,7 @@ def compatible_binning_target_expand(pattern):
     return expanded
 
 validate_sample_technology_config()
+validate_binning_config()
 
 # Return the path to the reads of a fraction of an assembly 
 def get_read_path(wildcards) : 
@@ -366,14 +475,14 @@ replace kraken2 by sourmash for taxonomic assignation ?
 
 
 binnings = []
-if(config["binning"] == True) : 
-    binnings += expand("{binner}_bins_reads_alignement", binner = config["binners"])
-if(config["short_read_binning"] == True) :
-    binnings += expand("{binner}_bins_short_reads_alignement", binner = config["binners"])
-if(config["short_read_cobinning"] == True) :
-    binnings += expand("{binner}_bins_cobinning_alignement", binner = config["binners"])
-if(config["additional_reads_cobinning"] == True) :
-    binnings += expand("{binner}_bins_additional_reads_cobinning_alignement", binner = config["binners"])
+if(is_binning_enabled() and long_read_binning_enabled()) :
+    binnings += expand("{binner}_bins_reads_alignement", binner = get_configured_binners())
+if(is_binning_enabled() and short_read_binning_enabled()) :
+    binnings += expand("{binner}_bins_short_reads_alignement", binner = get_configured_binners())
+if(is_binning_enabled() and short_read_cobinning_enabled()) :
+    binnings += expand("{binner}_bins_cobinning_alignement", binner = get_configured_binners())
+if(is_binning_enabled() and additional_reads_cobinning_enabled()) :
+    binnings += expand("{binner}_bins_additional_reads_cobinning_alignement", binner = get_configured_binners())
 
 
 
@@ -409,7 +518,16 @@ rule all :
         expand("outputs/{sample}/short_reads_on_reference.{reference}.bam", sample=get_samples_with_short_reads(), reference=get_reference_names())
             if(config["reference_mapping_evaluation"] == True) else "Snakefile", 
         compatible_short_read_mapping_expand("outputs/{sample}/{assembler}/short_reads_on_contigs.bam")
-            if(config["short_read_mapping_evaluation"] == True or config["short_read_binning"] == True or config["short_read_cobinning"] == True) else "Snakefile",
+            if(
+                config["short_read_mapping_evaluation"] == True
+                or (
+                    is_binning_enabled()
+                    and (
+                        short_read_binning_enabled()
+                        or short_read_cobinning_enabled()
+                    )
+                )
+            ) else "Snakefile",
         compatible_expand("outputs/{sample}/{assembler}/short_reads_on_contigs_mapping_evaluation/report.txt", require_short_reads=True)
             if(config["short_read_mapping_evaluation"] == True) else "Snakefile",
 
@@ -423,10 +541,10 @@ rule all :
         compatible_binning_target_expand("outputs/{sample}/{assembler}/{binning}/kraken2/bin.{target_bin}/krona.html")
             if(config["kraken2_on_bins"] == True) else "Snakefile",
         compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/read_contig_mapping_plot.pdf", include_short_read_binning=False)
-            if(config["checkm"] == True and config["read_mapping_evaluation"] == True) else "Snakefile",
+            if(config["checkm"] == True and config["read_mapping_evaluation"] == True and long_read_mapping_plot_enabled()) else "Snakefile",
         compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/read_contig_mapping.txt", include_short_read_binning=False)
-            if(config["checkm"] == True and config["read_mapping_evaluation"] == True) else "Snakefile",
+            if(config["checkm"] == True and config["read_mapping_evaluation"] == True and long_read_mapping_plot_enabled()) else "Snakefile",
         compatible_binner_expand("outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping_plot.pdf", require_short_reads=True, allowed_assemblers=SHORT_READ_ASSEMBLERS)
-            if(config["checkm"] == True and config["short_read_binning"] == True) else "Snakefile",
+            if(config["checkm"] == True and is_binning_enabled() and short_read_binning_enabled()) else "Snakefile",
         compatible_binner_expand("outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping.txt", require_short_reads=True, allowed_assemblers=SHORT_READ_ASSEMBLERS)
-            if(config["checkm"] == True and config["short_read_binning"] == True) else "Snakefile",
+            if(config["checkm"] == True and is_binning_enabled() and short_read_binning_enabled()) else "Snakefile",

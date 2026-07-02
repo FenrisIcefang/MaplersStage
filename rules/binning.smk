@@ -1,4 +1,4 @@
-if("metabat2" in config["binners"]) :
+if(is_binning_enabled() and "metabat2" in get_configured_binners()) :
     rule metabat2_binning: 
         input: 
             contigs =  "outputs/{sample}/{assembler}/assembly.fasta",
@@ -14,7 +14,7 @@ if("metabat2" in config["binners"]) :
             at_least_one_bin = "outputs/{sample}/{assembler}/metabat2_bins_{reference_reads}_alignement/bins/bin.1.fa"
         shell: "./sources/binning/metabat2_wraper.sh  {input.contigs} {input.alignement} {output.directory}"
 
-if(config["short_read_cobinning"]) :
+if(is_binning_enabled() and short_read_cobinning_enabled() and "metabat2" in get_configured_binners()) :
     rule metabat2_cobinning_short_reads: 
         input: 
             contigs =  "outputs/{sample}/{assembler}/assembly.fasta",
@@ -31,7 +31,7 @@ if(config["short_read_cobinning"]) :
             at_least_one_bin = "outputs/{sample}/{assembler}/metabat2_bins_cobinning_alignement/bins/bin.1.fa"
         shell: "./sources/binning/metabat2_wraper.sh  {input.contigs} {input.alignement1} {output.directory} {input.alignement2}"
 
-if(config["additional_reads_cobinning"]) :
+if(is_binning_enabled() and additional_reads_cobinning_enabled() and "metabat2" in get_configured_binners()) :
     rule metabat2_cobinning_additional_reads: 
         input: 
             contigs =  "outputs/{sample}/{assembler}/assembly.fasta",
@@ -48,7 +48,7 @@ if(config["additional_reads_cobinning"]) :
             at_least_one_bin = "outputs/{sample}/{assembler}/metabat2_bins_additional_reads_cobinning_alignement/bins/bin.1.fa"
         shell: "./sources/binning/metabat2_wraper.sh  {input.contigs} {input.alignement} {output.directory} {input.additional_alignements}"
 
-if("custom" in config["binners"]) :
+if(is_binning_enabled() and "custom" in get_configured_binners()) :
     rule copy_bins:
         input: config["custom_bins_path"]
         output:
