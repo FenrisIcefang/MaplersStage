@@ -9,15 +9,15 @@ analysis_name: test_1_technology_sample # Used to name the logs files
 # - Do not define short_reads_1/short_reads_2 inside hifi or ont samples.
 
 samples: 
- - name: hifi_1%
+ - name: hifi_1perc
    technology: hifi
    read_path: /projects/genscale/amashi/data/raw/hifi/zymoD6331_sub1.fastq
  
- - name: ont_1%
+ - name: ont_1perc
    technology: ont
    read_path: /projects/genscale/amashi/data/raw/ont/PAY12289_barcode13_sub1_match.fastq.gz
 
- - name: illumina_1%
+ - name: illumina_1perc
    technology: illumina
    short_reads_1: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R1.fastq.gz 
    short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
@@ -68,8 +68,8 @@ checkm_database: outputs/CheckM2_database/uniref100.KO.1.dmnd #if it doesn't exi
 # Assemblers create contigs/assembly.fasta.
 assemblers: # uncomment assemblers to use them
  - metaMDBG
- - metaflye
- - hifiasm_meta
+# - metaflye
+# - hifiasm_meta
  - metaspades
 # - operaMS # legacy hybrid assembler; requires long reads plus associated short-read inputs. To be refactored later.
 # - custom_assembly # requires custom_assembly_path
@@ -112,12 +112,22 @@ kraken2_target_bins: #/!\ Require having done binning separatly on a previous st
  - bin.1
  - another_bin_name
 
-# Fractionned read analysis
-fractions: 
-#  - full #all reads
-  - mapped #reads that mapped to a contig, and were sucessfully assembled
-  - unmapped #reads that are not mapped to a contig
-fastqc: false 
+# Fractioned read quality analysis
+fractions:
+  - full # all reads
+  - mapped # reads that mapped to a contig, and were successfully assembled
+  - unmapped # reads that are not mapped to a contig
+
+# Long reads use NanoPlot; Illumina short reads use FastQC.
+# For Illumina mapped/unmapped fractions, extract_short_read_fractions.sh
+# separates reads according to each read's mapping flag in the BAM. This is
+# not a strict pair-level separation when mates have different mapping states.
+fraction_evaluation_tools:
+  long_reads:
+    - nanoplot
+  short_reads:
+    - fastqc
+
 kraken2: false # requires kraken2db
 kat: false
 

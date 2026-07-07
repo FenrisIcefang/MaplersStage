@@ -84,12 +84,14 @@ kraken2_on_bins: false #/!\ Require having done binning separatly on a previous 
 kraken2_target_bins: #/!\ Require having done binning separatly on a previous step, requires kraken2db
  - 1
 
-# Fractionned read analysis
+# Fractioned read quality analysis
 fractions: 
 #  - full #all reads
 #  - mapped #reads that mapped to a contig, and were sucessfully assembled
   - unmapped #reads that are not mapped to a contig
-fastqc: false 
+fraction_evaluation_tools:
+  long_reads: []
+  short_reads: []
 kraken2: true # requires kraken2db
 kat: false
 

@@ -118,6 +118,12 @@ def long_read_mapping_plot_enabled():
         )
     )
 
+def nanoplot_enabled():
+    return "nanoplot" in config.get("fraction_evaluation_tools", {}).get("long_reads", [])
+
+def fastqc_enabled():
+    return "fastqc" in config.get("fraction_evaluation_tools", {}).get("short_reads", [])
+
 def get_sample_technology(wildcards):
     return get_sample("technology", wildcards)
 
@@ -243,6 +249,28 @@ def validate_reference_config():
                 f"Enabled options: {enabled_reference_options}\n"
                 "Please define reference_genomes in the config."
             )
+
+def validate_fraction_evaluation_tools():
+    tools = config.get("fraction_evaluation_tools", {})
+
+    allowed = {
+        "long_reads": ["nanoplot"],
+        "short_reads": ["fastqc"],
+    }
+
+    for read_type, selected_tools in tools.items():
+        if read_type not in allowed:
+            raise ValueError(
+                f"Unknown read type in fraction_evaluation_tools: {read_type}. "
+                f"Allowed read types are: {list(allowed.keys())}"
+            )
+
+        for tool in selected_tools:
+            if tool not in allowed[read_type]:
+                raise ValueError(
+                    f"Invalid tool '{tool}' for {read_type}. "
+                    f"Allowed tools for {read_type}: {allowed[read_type]}"
+                )
 
 def validate_sample_technology_config():
     for sample in config["samples"]:
@@ -459,6 +487,7 @@ def compatible_binning_target_expand(pattern):
 validate_sample_technology_config()
 validate_binning_config()
 validate_reference_config()
+validate_fraction_evaluation_tools()
 
 # Return the path to the reads of a fraction of an assembly 
 def get_read_path(wildcards) : 
@@ -512,15 +541,15 @@ rule all :
     input :
         compatible_expand("outputs/{sample}/{assembler}/assembly.fasta"),
 
-        # Read quality analysis (fastqc ou nanoplot, kraken2, kat)
+        # Read quality analysis (FastQC for short reads, NanoPlot for long reads, kraken2, kat)
         compatible_fraction_expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R1_fastqc.html", require_short_reads=True)
-            if(config.get("fastqc", False) == True) else "Snakefile",
+            if(fastqc_enabled()) else "Snakefile",
 
         compatible_fraction_expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R2_fastqc.html", require_short_reads=True)
-            if(config.get("fastqc", False) == True) else "Snakefile",
+            if(fastqc_enabled()) else "Snakefile",
 
         compatible_fraction_expand("outputs/{sample}/{assembler}/nanoplot/{fraction}/NanoPlot-report.html", require_long_reads=True)
-            if(config.get("nanoplot", False) == True) else "Snakefile",
+            if(nanoplot_enabled()) else "Snakefile",
         compatible_fraction_expand("outputs/{sample}/{assembler}/kraken2/{fraction}/krona.html", require_long_reads=True)
             if(config["kraken2"] == True) else "Snakefile",
         compatible_fraction_expand("outputs/{sample}/{assembler}/kat/{fraction}-stats.tsv", require_long_reads=True)

@@ -18,7 +18,7 @@ rule reads_on_contigs_mapping :
 if(
     (is_binning_enabled() and (short_read_binning_enabled() or short_read_cobinning_enabled()))
     or config["short_read_mapping_evaluation"]
-    or config.get("fastqc", False)
+    or fastqc_enabled()
 ) :
     rule short_reads_on_contigs_mapping : 
         params : 

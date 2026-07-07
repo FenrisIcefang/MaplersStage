@@ -1,6 +1,6 @@
 
 
-if(config.get("fastqc", False) or config.get("nanoplot", False) or config["kraken2"] or config["kat"]) : 
+if(fastqc_enabled() or nanoplot_enabled() or config["kraken2"] or config["kat"]) :
     rule extract_unmapped_reads : 
         params : 
             expand("{sample}", sample=get_samples("name")),
@@ -18,7 +18,7 @@ if(config.get("fastqc", False) or config.get("nanoplot", False) or config["krake
             runtime=eval(config["rule_extract_unmapped_reads"]["time"]),
         shell : "./sources/read_quality_analysis/extract_unmapped_reads.sh {input.mapping} {params.output_directory}"
 
-if(config.get("fastqc", False)) : 
+if(fastqc_enabled()) :
     rule fastqc : 
         params : 
             output_directory = "outputs/{sample}/{assembler}/fastqc/{fraction}"
@@ -36,7 +36,7 @@ if(config.get("fastqc", False)) :
             runtime=eval(config["rule_fastqc"]["time"]),
         shell : "bash ./sources/read_quality_analysis/fastqc.sh {input.R1} {input.R2} {params.output_directory} {output.R1_html} {output.R2_html} {threads}"
 
-if(config.get("fastqc", False)) :
+if(fastqc_enabled()) :
     rule extract_short_read_fractions :
         input :
             bam = "outputs/{sample}/{assembler}/short_reads_on_contigs.bam"
@@ -54,7 +54,7 @@ if(config.get("fastqc", False)) :
         shell :
             "bash ./sources/read_quality_analysis/extract_short_read_fractions.sh {input.bam} outputs/{wildcards.sample}/{wildcards.assembler}/fastqc"
 
-if(config.get("nanoplot", False)) : 
+if(nanoplot_enabled()) :
     rule nanoplot : 
         params : 
             expand("{sample}", sample=get_samples("name")),

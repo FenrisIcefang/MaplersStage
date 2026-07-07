@@ -118,7 +118,7 @@ outputs
 └── <sample_name>
     └── <assembler> # multiple choice in the assemblers field
         ├── assembly.fasta
-        ├── fastqc # Requires fastqc: true
+        ├── fastqc # Requires fraction_evaluation_tools.short_reads: [fastqc]
         │   └── <fraction_name> # multiple choice in the fractions field
         │       ├── fastqc_report.html
         │       └── <fraction_name>_fastqc.zip
@@ -282,4 +282,3 @@ Additionally, minimap2, pysam, biopython, pandas, matplotlib and numpy were used
 
 ## Citation
    Nicolas Maurice, Claire Lemaitre, Riccardo Vicedomini, Clémence Frioux, [Mapler: a pipeline for assessing assembly quality in taxonomically rich metagenomes sequenced with HiFi reads](https://academic.oup.com/bioinformatics/article/41/6/btaf334/8157874), Bioinformatics (2025)
-
