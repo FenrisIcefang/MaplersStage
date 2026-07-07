@@ -238,3 +238,8 @@ rule_fastqc:
   threads: 1
   memory: 5000 
   time: 1*60 #in minutes
+
+rule_nanoplot:
+  threads: 8
+  memory: 16000
+  time: 2*60 # in minutes
