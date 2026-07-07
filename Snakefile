@@ -551,33 +551,33 @@ rule all :
 
         # Read quality analysis (FastQC for short reads, NanoPlot for long reads, kraken2, kat)
         compatible_fraction_expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R1_fastqc.html", require_short_reads=True)
-            if(fastqc_enabled()) else "Snakefile",
+            if(fastqc_enabled()) else [],
 
         compatible_fraction_expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R2_fastqc.html", require_short_reads=True)
-            if(fastqc_enabled()) else "Snakefile",
+            if(fastqc_enabled()) else [],
 
         compatible_fraction_expand("outputs/{sample}/{assembler}/nanoplot/{fraction}/NanoPlot-report.html", require_long_reads=True)
-            if(nanoplot_enabled()) else "Snakefile",
+            if(nanoplot_enabled()) else [],
         compatible_fraction_expand("outputs/{sample}/{assembler}/kraken2/{fraction}/krona.html", require_long_reads=True)
-            if(config["kraken2"] == True) else "Snakefile",
+            if(config["kraken2"] == True) else [],
         compatible_fraction_expand("outputs/{sample}/{assembler}/kat/{fraction}-stats.tsv", require_long_reads=True)
-            if(config["kat"] == True) else "Snakefile",
+            if(config["kat"] == True) else [],
         compatible_expand("outputs/{sample}/{assembler}/kat/kat-plot.pdf", require_long_reads=True)
-            if(config["kat"] == True and "mapped" in get_fractions() and "unmapped" in get_fractions()) else "Snakefile",
+            if(config["kat"] == True and "mapped" in get_fractions() and "unmapped" in get_fractions()) else [],
 
         # Contig quality analysis (read mapping, short read mapping, metaquast, reference mapping)
         compatible_expand("outputs/{sample}/{assembler}/reads_on_contigs_mapping_evaluation/report.txt", require_long_reads=True)
-            if(config["read_mapping_evaluation"] == True) else "Snakefile",
+            if(config["read_mapping_evaluation"] == True) else [],
         compatible_expand("outputs/{sample}/{assembler}/metaquast/report.txt")
-            if(config["metaquast"] == True and ("abundance_information" in config)) else "Snakefile",
+            if(config["metaquast"] == True and ("abundance_information" in config)) else [],
         compatible_expand("outputs/{sample}/{assembler}/metaquast/results/summary/TSV/")
-            if(config["metaquast"] == True) else "Snakefile",
+            if(config["metaquast"] == True) else [],
         expand("outputs/{sample}/long_reads_on_reference.{reference}.bam", sample=get_samples_with_long_reads(), reference=get_reference_names())
-            if(config["reference_mapping_evaluation"] == True) else "Snakefile",
+            if(config["reference_mapping_evaluation"] == True) else [],
         expand("outputs/{sample}/short_reads_on_reference.{reference}.bam", sample=get_samples_with_short_reads(), reference=get_reference_names())
-            if(config["reference_mapping_evaluation"] == True) else "Snakefile", 
+            if(config["reference_mapping_evaluation"] == True) else [],
         compatible_reference_expand("outputs/{sample}/{assembler}/contigs_on_reference.{reference}.bam")
-            if(config.get("contigs_on_reference_mapping", False) == True) else "Snakefile",
+            if(config.get("contigs_on_reference_mapping", False) == True) else [],
         compatible_short_read_mapping_expand("outputs/{sample}/{assembler}/short_reads_on_contigs.bam")
             if(
                 config["short_read_mapping_evaluation"] == True
@@ -588,24 +588,24 @@ rule all :
                         or short_read_cobinning_enabled()
                     )
                 )
-            ) else "Snakefile",
+            ) else [],
         compatible_expand("outputs/{sample}/{assembler}/short_reads_on_contigs_mapping_evaluation/report.txt", require_short_reads=True)
-            if(config["short_read_mapping_evaluation"] == True) else "Snakefile",
+            if(config["short_read_mapping_evaluation"] == True) else [],
 
         # Bins quality analysis (checkm, separate read and contig quality analysis by bin quality)
         compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/checkm/checkm_report.txt")
-            if(config["checkm"] == True) else "Snakefile",
+            if(config["checkm"] == True) else [],
         compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/checkm/checkm-plot.pdf")
-            if(config["checkm"] == True) else "Snakefile",
+            if(config["checkm"] == True) else [],
         compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/gtdbtk/results/gtdbtk.bac120.summary.tsv")
-            if(config["gtdbtk"] == True) else "Snakefile",
+            if(config["gtdbtk"] == True) else [],
         compatible_binning_target_expand("outputs/{sample}/{assembler}/{binning}/kraken2/bin.{target_bin}/krona.html")
-            if(config["kraken2_on_bins"] == True) else "Snakefile",
+            if(config["kraken2_on_bins"] == True) else [],
         compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/read_contig_mapping_plot.pdf", include_short_read_binning=False)
-            if(config["checkm"] == True and config["read_mapping_evaluation"] == True and long_read_mapping_plot_enabled()) else "Snakefile",
+            if(config["checkm"] == True and config["read_mapping_evaluation"] == True and long_read_mapping_plot_enabled()) else [],
         compatible_binning_expand("outputs/{sample}/{assembler}/{binning}/read_contig_mapping.txt", include_short_read_binning=False)
-            if(config["checkm"] == True and config["read_mapping_evaluation"] == True and long_read_mapping_plot_enabled()) else "Snakefile",
+            if(config["checkm"] == True and config["read_mapping_evaluation"] == True and long_read_mapping_plot_enabled()) else [],
         compatible_binner_expand("outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping_plot.pdf", require_short_reads=True, allowed_assemblers=SHORT_READ_ASSEMBLERS)
-            if(config["checkm"] == True and is_binning_enabled() and short_read_binning_enabled()) else "Snakefile",
+            if(config["checkm"] == True and is_binning_enabled() and short_read_binning_enabled()) else [],
         compatible_binner_expand("outputs/{sample}/{assembler}/{binner}_bins_short_reads_alignement/read_contig_mapping.txt", require_short_reads=True, allowed_assemblers=SHORT_READ_ASSEMBLERS)
-            if(config["checkm"] == True and is_binning_enabled() and short_read_binning_enabled()) else "Snakefile",
+            if(config["checkm"] == True and is_binning_enabled() and short_read_binning_enabled()) else [],

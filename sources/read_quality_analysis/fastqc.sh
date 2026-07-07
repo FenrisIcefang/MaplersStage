@@ -32,7 +32,14 @@ R2_base=${R2_base%.gz}
 R2_base=${R2_base%.fastq}
 R2_base=${R2_base%.fq}
 
-mv "$output_directory/${R1_base}_fastqc.html" "$R1_output"
-mv "$output_directory/${R2_base}_fastqc.html" "$R2_output"
+R1_html="$output_directory/${R1_base}_fastqc.html"
+R2_html="$output_directory/${R2_base}_fastqc.html"
 
+if [ "$R1_html" != "$R1_output" ]; then
+    mv "$R1_html" "$R1_output"
+fi
+
+if [ "$R2_html" != "$R2_output" ]; then
+    mv "$R2_html" "$R2_output"
+fi
 
