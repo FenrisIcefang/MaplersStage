@@ -118,11 +118,9 @@ fractions:
   - mapped # reads that mapped to a contig, and were successfully assembled
   - unmapped # reads that are not mapped to a contig
 
-# Long reads use NanoPlot; Illumina short reads use FastQC.
-# For Illumina mapped/unmapped fractions, extract_short_read_fractions.sh
-# separates reads according to each read's mapping flag in the BAM. This is
-# not a strict pair-level separation when mates have different mapping states.
 fraction_evaluation_tools:
+# For Illumina mapped/unmapped fractions, the extract_short_read_fractions.sh separates reads according to each read's mapping flag in the BAM. 
+# This means that is not a strict pair-level separation when read pairs have different mapping states.
   long_reads:
     - nanoplot
   short_reads:

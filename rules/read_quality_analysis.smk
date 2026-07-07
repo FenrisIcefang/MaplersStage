@@ -1,6 +1,6 @@
 
 
-if(fastqc_enabled() or nanoplot_enabled() or config["kraken2"] or config["kat"]) :
+if(nanoplot_enabled() or config["kraken2"] or config["kat"]) :
     rule extract_unmapped_reads : 
         params : 
             expand("{sample}", sample=get_samples("name")),
