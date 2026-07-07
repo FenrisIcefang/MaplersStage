@@ -58,7 +58,7 @@ if(nanoplot_enabled()) :
     rule nanoplot : 
         params : 
             expand("{sample}", sample=get_samples("name")),
-            expand("{fraction}", fraction=config["fractions"]),
+            expand("{fraction}", fraction=get_fractions()),
             output_directory = "outputs/{sample}/{assembler}/nanoplot/{fraction}"
         input : 
             get_read_path
@@ -79,7 +79,7 @@ if(config["kraken2"]) :
     rule kraken2 :
         params : 
             expand("{sample}", sample=get_samples("name")),
-            expand("{fraction}", fraction=config["fractions"]),
+            expand("{fraction}", fraction=get_fractions()),
             database = config["kraken2db"],
             output_directory = "outputs/{sample}/{assembler}/kraken2/{fraction}"
         input : 
@@ -98,7 +98,7 @@ if(config["kat"]) :
     rule kat_sect : 
         params : 
             expand("{sample}", sample=get_samples("name")),
-            expand("{fraction}", fraction=config["fractions"]),
+            expand("{fraction}", fraction=get_fractions()),
             output_prefix="outputs/{sample}/{assembler}/kat/{fraction}",
         input : 
             reads = get_read_path, # The reads in witch we wish to evaluate the read abundance

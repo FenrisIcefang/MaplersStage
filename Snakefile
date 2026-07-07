@@ -118,11 +118,17 @@ def long_read_mapping_plot_enabled():
         )
     )
 
+def get_fractions():
+    return config.get("fractions") or []
+
+def get_fraction_evaluation_tools(read_type):
+    return (config.get("fraction_evaluation_tools", {}) or {}).get(read_type) or []
+
 def nanoplot_enabled():
-    return "nanoplot" in config.get("fraction_evaluation_tools", {}).get("long_reads", [])
+    return "nanoplot" in get_fraction_evaluation_tools("long_reads")
 
 def fastqc_enabled():
-    return "fastqc" in config.get("fraction_evaluation_tools", {}).get("short_reads", [])
+    return "fastqc" in get_fraction_evaluation_tools("short_reads")
 
 def get_sample_technology(wildcards):
     return get_sample("technology", wildcards)
@@ -251,7 +257,7 @@ def validate_reference_config():
             )
 
 def validate_fraction_evaluation_tools():
-    tools = config.get("fraction_evaluation_tools", {})
+    tools = config.get("fraction_evaluation_tools", {}) or {}
 
     allowed = {
         "long_reads": ["nanoplot"],
@@ -259,6 +265,8 @@ def validate_fraction_evaluation_tools():
     }
 
     for read_type, selected_tools in tools.items():
+        selected_tools = selected_tools or []
+
         if read_type not in allowed:
             raise ValueError(
                 f"Unknown read type in fraction_evaluation_tools: {read_type}. "
@@ -384,7 +392,7 @@ def compatible_reference_expand(pattern, require_long_reads=False, require_short
 
 def compatible_fraction_expand(pattern, require_long_reads=False, require_short_reads=False, allowed_assemblers=None):
     expanded = []
-    for fraction in config["fractions"]:
+    for fraction in get_fractions():
         expanded += compatible_expand(
             pattern.replace("{fraction}", fraction),
             require_long_reads=require_long_reads,
@@ -498,7 +506,7 @@ def get_read_path(wildcards) :
 # Return the path to the reads of all fractions of an assembly 
 def get_all_read_path(wildcards) :
     out = []
-    for f in config["fractions"] :
+    for f in get_fractions() :
         wildcards.fraction = f
         out.append(get_read_path(wildcards))
     return out
@@ -555,7 +563,7 @@ rule all :
         compatible_fraction_expand("outputs/{sample}/{assembler}/kat/{fraction}-stats.tsv", require_long_reads=True)
             if(config["kat"] == True) else "Snakefile",
         compatible_expand("outputs/{sample}/{assembler}/kat/kat-plot.pdf", require_long_reads=True)
-            if(config["kat"] == True and "mapped" in config["fractions"] and "unmapped" in config["fractions"]) else "Snakefile",
+            if(config["kat"] == True and "mapped" in get_fractions() and "unmapped" in get_fractions()) else "Snakefile",
 
         # Contig quality analysis (read mapping, short read mapping, metaquast, reference mapping)
         compatible_expand("outputs/{sample}/{assembler}/reads_on_contigs_mapping_evaluation/report.txt", require_long_reads=True)

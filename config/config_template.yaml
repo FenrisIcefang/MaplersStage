@@ -114,17 +114,17 @@ kraken2_target_bins: #/!\ Require having done binning separatly on a previous st
 
 # Fractioned read quality analysis
 fractions:
-  - full # all reads
-  - mapped # reads that mapped to a contig, and were successfully assembled
-  - unmapped # reads that are not mapped to a contig
+ - full # all reads
+# - mapped # reads that mapped to a contig, and were successfully assembled
+# - unmapped # reads that are not mapped to a contig
 
 fraction_evaluation_tools:
 # For Illumina mapped/unmapped fractions, the extract_short_read_fractions.sh separates reads according to each read's mapping flag in the BAM. 
 # This means that is not a strict pair-level separation when read pairs have different mapping states.
   long_reads:
-    - nanoplot
+  - nanoplot
   short_reads:
-    - fastqc
+#  - fastqc
 
 kraken2: false # requires kraken2db
 kat: false
