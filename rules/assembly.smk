@@ -4,7 +4,7 @@ if("metaMDBG" in config["assemblers"]) :
             expand("{name}", name=get_samples("name")),
             tmp_directory="outputs/{sample}/metaMDBG/tmp/",
             technology=get_sample_technology,
-            cleanup=config.get("cleanup_tmp", "yes")
+            cleanup=get_cleanup_tmp()
         conda : "../envs/metaMDBG.yaml"
         threads : config["rule_metaMDBG_assembly"]["threads"]
         resources :
@@ -21,7 +21,7 @@ if("myloasm" in config["assemblers"]) :
             expand("{name}", name=get_samples("name")),
             tmp_directory="outputs/{sample}/myloasm/tmp/",
             technology=get_sample_technology,
-            cleanup=config.get("cleanup_tmp", "yes")
+            cleanup=get_cleanup_tmp()
         conda : "../envs/myloasm.yaml"
         threads : config["rule_myloasm_assembly"]["threads"]
         resources :
@@ -39,7 +39,7 @@ if("metaflye" in config["assemblers"]) :
             expand("{name}", name=get_samples("name")),
             output_directory="outputs/{sample}/metaflye/",
             technology=get_sample_technology,
-            cleanup=config.get("cleanup_tmp", "yes")
+            cleanup=get_cleanup_tmp()
         conda : "../envs/flye.yaml"
         threads : config["rule_metaflye_assembly"]["threads"]
         resources :
@@ -55,7 +55,7 @@ if("hifiasm_meta" in config["assemblers"]) :
         params : 
             expand("{name}", name=get_samples("name")),
             output_directory="outputs/{sample}/hifiasm_meta/",
-            cleanup=config.get("cleanup_tmp", "yes")
+            cleanup=get_cleanup_tmp()
         conda : "../envs/hifiasm_meta.yaml"
         threads : config["rule_hifiasm_meta_assembly"]["threads"]
         resources :
@@ -74,7 +74,7 @@ if("operaMS" in config["assemblers"]) :
             tmp_directory="outputs/{sample}/operaMS/tmp/",
             operaMS_path=config.get("operaMS_path", "outputs/tools/OPERA-MS"),
             short_read_assembly=config.get("short_read_assembly", "none"),
-            cleanup=config.get("cleanup_tmp", "yes")
+            cleanup=get_cleanup_tmp()
         conda : "../envs/operaMS.yaml"
         threads : config["rule_operaMS_assembly"]["threads"]
         resources :
@@ -96,7 +96,7 @@ if("metaspades" in config["assemblers"]) :
             output_directory="outputs/{sample}/metaspades/",
             long_reads=get_optional_long_read_path,
             technology=get_metaspades_long_read_technology,
-            cleanup=config.get("cleanup_tmp", "yes")
+            cleanup=get_cleanup_tmp()
         conda : "../envs/spades.yaml"
         threads : config["rule_metaspades_assembly"]["threads"]
         resources :

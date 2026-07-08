@@ -155,6 +155,23 @@ def nanoplot_enabled():
 def fastqc_enabled():
     return "fastqc" in get_fraction_evaluation_tools("short_reads")
 
+def normalize_cleanup_value(cleanup):
+    if cleanup is True:
+        return "yes"
+    if cleanup is False:
+        return "no"
+    if isinstance(cleanup, str):
+        cleanup = cleanup.strip().lower()
+        if cleanup in ["yes", "no"]:
+            return cleanup
+    raise ValueError(
+        "Invalid value for cleanup_tmp. Allowed values are 'yes' or 'no'. "
+        "Use cleanup_tmp: no to keep temporary assembly files."
+    )
+
+def get_cleanup_tmp():
+    return normalize_cleanup_value(config.get("cleanup_tmp", "yes"))
+
 def get_sample_technology(wildcards):
     return get_sample("technology", wildcards)
 
@@ -321,12 +338,7 @@ def validate_fraction_evaluation_tools():
                 )
 
 def validate_cleanup_config():
-    cleanup = config.get("cleanup_tmp", "yes")
-    if cleanup not in ["yes", "no"]:
-        raise ValueError(
-            "Invalid value for cleanup_tmp. Allowed values are 'yes' or 'no'. "
-            "Use cleanup_tmp: no to keep temporary assembly files."
-        )
+    get_cleanup_tmp()
 
 def validate_sample_technology_config():
     for sample in config["samples"]:
