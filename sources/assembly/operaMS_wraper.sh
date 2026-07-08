@@ -15,6 +15,23 @@ output="$7"
 cleanup="${8:-yes}"
 threads="${9:-1}"
 
+install_missing_perl_modules() {
+    if [ -z "${CONDA_PREFIX:-}" ]; then
+        echo "CONDA_PREFIX is not set. OPERA-MS wrapper must run inside its Snakemake conda environment." >&2
+        exit 1
+    fi
+
+    export PERL5LIB="${CONDA_PREFIX}/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
+
+    if ! perl -MSwitch -e 1 2>/dev/null; then
+        echo "Perl module Switch is missing. Installing it with cpanm inside the OPERA-MS conda environment..."
+        cpanm --notest --local-lib-contained "$CONDA_PREFIX" Switch
+    fi
+
+    export PERL5LIB="${CONDA_PREFIX}/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
+}
+
+install_missing_perl_modules
 
 if [ ! -d "$opera_path" ]; then
    echo "not here"
