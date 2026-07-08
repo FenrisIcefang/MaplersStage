@@ -1,7 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #SBATCH --time=3-00:00:00
 #SBATCH --mem=10G
 #SBATCH --cpus-per-task=1
+
+set -euo pipefail
 
 opera_path="$1"
 long_reads="$2"
@@ -9,7 +11,9 @@ short_reads_1="$3"
 short_reads_2="$4"
 short_read_assembly="$5"
 tmp_directory="$6"
-cleanup="${7:-yes}"
+output="$7"
+cleanup="${8:-yes}"
+threads="${9:-1}"
 
 
 if [ ! -d "$opera_path" ]; then
@@ -29,7 +33,7 @@ if [ -n "$short_read_assembly" ] && [ "$short_read_assembly" != "none" ]; then
 fi
 
 perl "$opera_path"/OPERA-MS.pl \
-    --num-processors $(nproc) \
+    --num-processors "$threads" \
     --no-ref-clustering \
     $CONTIG_ARG \
     --short-read1 "$short_reads_1" \
@@ -37,8 +41,8 @@ perl "$opera_path"/OPERA-MS.pl \
     --long-read "$long_reads" \
     --out-dir "$tmp_directory"
 
-mv "$tmp_directory"/OPERA-MS_results/final_assembly.fasta "$tmp_directory"/assembly.fasta
+mv "$tmp_directory"/OPERA-MS_results/final_assembly.fasta "$output"
 
-if [ "$cleanup" != "no" ] && [ -f "$tmp_directory/assembly.fasta" ]; then
+if [ "$cleanup" != "no" ] && [ -f "$output" ]; then
     rm -rf "$tmp_directory"
 fi

@@ -3,6 +3,7 @@
 # "$1" : path/to/the/run.fastq
 # "$2" : path/to/the/output/folder
 
+set -euo pipefail
 
 run="$1"
 output_directory="$2"

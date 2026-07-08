@@ -16,7 +16,7 @@ rule reads_on_contigs_mapping :
     shell : "./sources/mapping.sh {output} {input.reads} {input.assembly} {params.preset} '' {threads}"
 
 if(
-    (is_binning_enabled() and (short_read_binning_enabled() or short_read_cobinning_enabled()))
+    (is_binning_enabled() and short_read_binning_enabled())
     or config["short_read_mapping_evaluation"]
     or fastqc_enabled()
 ) :
@@ -35,6 +35,21 @@ if(
             mem_mb=config["rules_mapping"]["memory"],
             runtime=eval(config["rules_mapping"]["time"]),
         shell : "./sources/mapping.sh {output} {input.R1} {input.assembly} sr {input.R2} {threads}"
+
+if(is_binning_enabled() and short_read_cobinning_enabled()) :
+    rule auxiliary_short_reads_on_contigs_mapping :
+        input :
+            reads_1 = lambda wildcards: get_auxiliary_short_read("auxiliary_short_reads_1", wildcards),
+            reads_2 = lambda wildcards: get_auxiliary_short_read("auxiliary_short_reads_2", wildcards),
+            assembly = "outputs/{sample}/{assembler}/assembly.fasta"
+        output : "outputs/{sample}/{assembler}/auxiliary_short_reads_on_contigs.bam"
+        conda : "../envs/mapping.yaml"
+        threads : config["rules_mapping"]["threads"]
+        resources :
+            cpus_per_task = config["rules_mapping"]["threads"],
+            mem_mb=config["rules_mapping"]["memory"],
+            runtime=eval(config["rules_mapping"]["time"]),
+        shell : "./sources/mapping.sh {output} {input.reads_1} {input.assembly} sr {input.reads_2} {threads}"
 
 
 

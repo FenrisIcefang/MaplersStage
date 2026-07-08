@@ -1,7 +1,7 @@
 ###### Utility function ######
 
 # Return a list containing the attribute "attribute" of each sample
-# attribute = {name, read_path, short_reads_1, short_reads_2}
+# attribute = {name, read_path, short_reads_1, short_reads_2, auxiliary_short_reads_1, auxiliary_short_reads_2}
 def get_samples(attribute) : 
     return [sample[attribute] for sample in config["samples"]]
 
@@ -28,6 +28,9 @@ def sample_has_long_reads(wildcards):
 def sample_has_short_reads(wildcards):
     return sample_name_has_short_reads(wildcards.sample)
 
+def sample_has_auxiliary_short_reads(wildcards):
+    return sample_name_has_auxiliary_short_reads(wildcards.sample)
+
 def get_config_sample(sample_name):
     index = get_samples("name").index(sample_name)
     return config["samples"][index]
@@ -44,6 +47,28 @@ def sample_name_has_short_reads(sample_name):
         and "short_reads_2" in sample
         and sample["short_reads_1"] != "none"
         and sample["short_reads_2"] != "none"
+    )
+
+def sample_name_has_auxiliary_short_reads(sample_name):
+    sample = get_config_sample(sample_name)
+
+    return (
+        "auxiliary_short_reads_1" in sample
+        and "auxiliary_short_reads_2" in sample
+        and sample["auxiliary_short_reads_1"] != "none"
+        and sample["auxiliary_short_reads_2"] != "none"
+    )
+
+def get_auxiliary_short_read(attribute, wildcards):
+    sample = get_config_sample(wildcards.sample)
+
+    if attribute in sample and sample[attribute] != "none":
+        return sample[attribute]
+
+    raise ValueError(
+        f"{attribute} not found in sample '{wildcards.sample}'. "
+        "auxiliary_short_reads_1 and auxiliary_short_reads_2 are required "
+        "for hybrid tools such as OPERA-MS and short_read_cobinning."
     )
 
 def get_samples_with_long_reads():
@@ -235,6 +260,21 @@ def validate_binning_config():
                 f"{missing_short_reads}."
             )
 
+    if is_binning_enabled() and short_read_cobinning_enabled():
+        samples_with_auxiliary_short_reads = [
+            sample["name"]
+            for sample in config["samples"]
+            if sample.get("technology") in ["hifi", "ont"]
+            and sample_name_has_auxiliary_short_reads(sample["name"])
+        ]
+        if len(samples_with_auxiliary_short_reads) == 0:
+            raise ValueError(
+                "short_read_cobinning is enabled but no long-read sample defines "
+                "auxiliary_short_reads_1 and auxiliary_short_reads_2. "
+                "short_read_cobinning now uses auxiliary_short_reads, not "
+                "illumina sample short_reads_1/short_reads_2."
+            )
+
 def validate_reference_config():
     reference_options = [
         "metaquast",
@@ -280,6 +320,14 @@ def validate_fraction_evaluation_tools():
                     f"Allowed tools for {read_type}: {allowed[read_type]}"
                 )
 
+def validate_cleanup_config():
+    cleanup = config.get("cleanup_tmp", "yes")
+    if cleanup not in ["yes", "no"]:
+        raise ValueError(
+            "Invalid value for cleanup_tmp. Allowed values are 'yes' or 'no'. "
+            "Use cleanup_tmp: no to keep temporary assembly files."
+        )
+
 def validate_sample_technology_config():
     for sample in config["samples"]:
         sample_name = sample.get("name", "<missing name>")
@@ -305,6 +353,35 @@ def validate_sample_technology_config():
                 "short_reads_1 and short_reads_2."
             )
 
+        if technology in ["hifi", "ont"] and any(
+            key in sample for key in ["short_reads_1", "short_reads_2"]
+        ):
+            raise ValueError(
+                f"Sample '{sample_name}' uses technology '{technology}' and must not "
+                "define short_reads_1/2. Use auxiliary_short_reads_1/2 for "
+                "hybrid tools on long-read samples."
+            )
+
+        auxiliary_keys = [
+            key for key in ["auxiliary_short_reads_1", "auxiliary_short_reads_2"]
+            if key in sample and sample[key] != "none"
+        ]
+        if len(auxiliary_keys) == 1:
+            raise ValueError(
+                f"Sample '{sample_name}' defines only one auxiliary short-read file. "
+                "Both auxiliary_short_reads_1 and auxiliary_short_reads_2 must be "
+                "defined together."
+            )
+
+        if technology == "illumina" and any(
+            key in sample for key in ["auxiliary_short_reads_1", "auxiliary_short_reads_2"]
+        ):
+            raise ValueError(
+                f"Sample '{sample_name}' uses technology 'illumina' and must not "
+                "define auxiliary_short_reads_1/2. Use short_reads_1 and "
+                "short_reads_2 for illumina samples."
+            )
+
     for assembler in config["assemblers"]:
         if assembler not in ASSEMBLER_COMPATIBILITY:
             raise ValueError(
@@ -322,9 +399,19 @@ def validate_sample_technology_config():
             sample["name"]
             for sample in config["samples"]
             if sample["technology"] in ASSEMBLER_COMPATIBILITY[assembler]
+            and (
+                assembler != "operaMS"
+                or sample_name_has_auxiliary_short_reads(sample["name"])
+            )
         ]
 
         if len(compatible_samples) == 0:
+            if assembler == "operaMS":
+                raise ValueError(
+                    "Assembler 'operaMS' requires at least one hifi/ont sample "
+                    "with auxiliary_short_reads_1 and auxiliary_short_reads_2."
+                )
+
             sample_tech_summary = [
                 f"{sample['name']}={sample['technology']}"
                 for sample in config["samples"]
@@ -341,6 +428,10 @@ def validate_sample_technology_config():
             assembler
             for assembler in config["assemblers"]
             if sample["technology"] in ASSEMBLER_COMPATIBILITY[assembler]
+            and (
+                assembler != "operaMS"
+                or sample_name_has_auxiliary_short_reads(sample["name"])
+            )
         ]
         if len(compatible_assemblers) == 0:
             raise ValueError(
@@ -348,7 +439,7 @@ def validate_sample_technology_config():
                 "has no compatible assembler in config['assemblers']."
             )
 
-def get_compatible_sample_assembler_pairs(require_long_reads=False, require_short_reads=False, allowed_assemblers=None):
+def get_compatible_sample_assembler_pairs(require_long_reads=False, require_short_reads=False, require_auxiliary_short_reads=False, allowed_assemblers=None):
     pairs = []
     for sample in config["samples"]:
         sample_name = sample["name"]
@@ -357,17 +448,22 @@ def get_compatible_sample_assembler_pairs(require_long_reads=False, require_shor
             continue
         if require_short_reads and not sample_name_has_short_reads(sample_name):
             continue
+        if require_auxiliary_short_reads and not sample_name_has_auxiliary_short_reads(sample_name):
+            continue
         for assembler in config["assemblers"]:
             if allowed_assemblers is not None and assembler not in allowed_assemblers:
+                continue
+            if assembler == "operaMS" and not sample_name_has_auxiliary_short_reads(sample_name):
                 continue
             if technology in ASSEMBLER_COMPATIBILITY[assembler]:
                 pairs.append({"sample": sample_name, "assembler": assembler})
     return pairs
 
-def compatible_expand(pattern, require_long_reads=False, require_short_reads=False, allowed_assemblers=None):
+def compatible_expand(pattern, require_long_reads=False, require_short_reads=False, require_auxiliary_short_reads=False, allowed_assemblers=None):
     pairs = get_compatible_sample_assembler_pairs(
         require_long_reads,
         require_short_reads,
+        require_auxiliary_short_reads,
         allowed_assemblers,
     )
     return expand(
@@ -377,7 +473,7 @@ def compatible_expand(pattern, require_long_reads=False, require_short_reads=Fal
         assembler=[p["assembler"] for p in pairs],
     )
 
-def compatible_reference_expand(pattern, require_long_reads=False, require_short_reads=False, allowed_assemblers=None):
+def compatible_reference_expand(pattern, require_long_reads=False, require_short_reads=False, require_auxiliary_short_reads=False, allowed_assemblers=None):
     expanded = []
 
     for reference in get_reference_names():
@@ -385,29 +481,32 @@ def compatible_reference_expand(pattern, require_long_reads=False, require_short
             pattern.replace("{reference}", reference),
             require_long_reads=require_long_reads,
             require_short_reads=require_short_reads,
+            require_auxiliary_short_reads=require_auxiliary_short_reads,
             allowed_assemblers=allowed_assemblers,
         )
 
     return expanded
 
-def compatible_fraction_expand(pattern, require_long_reads=False, require_short_reads=False, allowed_assemblers=None):
+def compatible_fraction_expand(pattern, require_long_reads=False, require_short_reads=False, require_auxiliary_short_reads=False, allowed_assemblers=None):
     expanded = []
     for fraction in get_fractions():
         expanded += compatible_expand(
             pattern.replace("{fraction}", fraction),
             require_long_reads=require_long_reads,
             require_short_reads=require_short_reads,
+            require_auxiliary_short_reads=require_auxiliary_short_reads,
             allowed_assemblers=allowed_assemblers,
         )
     return expanded
 
-def compatible_binner_expand(pattern, require_long_reads=False, require_short_reads=False, allowed_assemblers=None):
+def compatible_binner_expand(pattern, require_long_reads=False, require_short_reads=False, require_auxiliary_short_reads=False, allowed_assemblers=None):
     expanded = []
     for binner in get_configured_binners():
         expanded += compatible_expand(
             pattern.replace("{binner}", binner),
             require_long_reads=require_long_reads,
             require_short_reads=require_short_reads,
+            require_auxiliary_short_reads=require_auxiliary_short_reads,
             allowed_assemblers=allowed_assemblers,
         )
     return expanded
@@ -421,21 +520,29 @@ def compatible_short_read_assembler_expand(pattern):
 
 def compatible_short_read_mapping_expand(pattern):
     expanded = []
-    if config["short_read_mapping_evaluation"] or (
-        is_binning_enabled() and short_read_cobinning_enabled()
-    ):
+    if config["short_read_mapping_evaluation"]:
         expanded += compatible_expand(pattern, require_short_reads=True)
     if is_binning_enabled() and short_read_binning_enabled():
         expanded += compatible_short_read_assembler_expand(pattern)
     return list(dict.fromkeys(expanded))
 
+def compatible_auxiliary_short_read_mapping_expand(pattern):
+    if is_binning_enabled() and short_read_cobinning_enabled():
+        return compatible_expand(
+            pattern,
+            require_long_reads=True,
+            require_auxiliary_short_reads=True,
+        )
+    return []
+
 def get_binning_triples(include_short_read_binning=True):
     triples = []
 
-    def add_binning_outputs(binning_names, require_long_reads=False, require_short_reads=False, allowed_assemblers=None):
+    def add_binning_outputs(binning_names, require_long_reads=False, require_short_reads=False, require_auxiliary_short_reads=False, allowed_assemblers=None):
         pairs = get_compatible_sample_assembler_pairs(
             require_long_reads,
             require_short_reads,
+            require_auxiliary_short_reads,
             allowed_assemblers,
         )
         for pair in pairs:
@@ -465,7 +572,7 @@ def get_binning_triples(include_short_read_binning=True):
         add_binning_outputs(
             expand("{binner}_bins_cobinning_alignement", binner=get_configured_binners()),
             require_long_reads=True,
-            require_short_reads=True,
+            require_auxiliary_short_reads=True,
         )
     if is_binning_enabled() and additional_reads_cobinning_enabled():
         add_binning_outputs(
@@ -496,6 +603,7 @@ validate_sample_technology_config()
 validate_binning_config()
 validate_reference_config()
 validate_fraction_evaluation_tools()
+validate_cleanup_config()
 
 # Return the path to the reads of a fraction of an assembly 
 def get_read_path(wildcards) : 
@@ -583,12 +691,11 @@ rule all :
                 config["short_read_mapping_evaluation"] == True
                 or (
                     is_binning_enabled()
-                    and (
-                        short_read_binning_enabled()
-                        or short_read_cobinning_enabled()
-                    )
+                    and short_read_binning_enabled()
                 )
             ) else [],
+        compatible_auxiliary_short_read_mapping_expand("outputs/{sample}/{assembler}/auxiliary_short_reads_on_contigs.bam")
+            if(is_binning_enabled() and short_read_cobinning_enabled()) else [],
         compatible_expand("outputs/{sample}/{assembler}/short_reads_on_contigs_mapping_evaluation/report.txt", require_short_reads=True)
             if(config["short_read_mapping_evaluation"] == True) else [],
 

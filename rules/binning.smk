@@ -19,7 +19,7 @@ if(is_binning_enabled() and short_read_cobinning_enabled() and "metabat2" in get
         input: 
             contigs =  "outputs/{sample}/{assembler}/assembly.fasta",
             alignement1 =  "outputs/{sample}/{assembler}/reads_on_contigs.bam",
-            alignement2 =  "outputs/{sample}/{assembler}/short_reads_on_contigs.bam",
+            alignement2 =  "outputs/{sample}/{assembler}/auxiliary_short_reads_on_contigs.bam",
         conda: "../envs/metabat2.yaml",
         threads: config["rules_metabat2_binnings"]["threads"]
         resources:

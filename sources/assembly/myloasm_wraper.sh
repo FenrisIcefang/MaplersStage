@@ -1,6 +1,8 @@
 #!/bin/sh
 # This script assembles a set of reads into a metagenome using Myloasm
 
+set -euo pipefail
+
 sample="$1"
 tmp_directory="$2"
 output="$3"

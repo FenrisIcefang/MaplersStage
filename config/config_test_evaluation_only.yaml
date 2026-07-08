@@ -14,10 +14,10 @@ samples:
  - name: test_dataset
    technology: hifi
    read_path: test/test_dataset.fastq
+   # auxiliary_short_reads_1/2 are optional and used only by hybrid tools such as OPERA-MS and short_read_cobinning.
+   # auxiliary_short_reads_1: /path/to/illumina_R1.fastq.gz
+   # auxiliary_short_reads_2: /path/to/illumina_R2.fastq.gz
 
-# (optional), short reads, may be used for binning or evaluation. Should be from the same sample as the long reads
-#short_reads_1: /path/to/short_reads_1.fastq
-#short_reads_2: /path/to/short_reads_2.fastq
 # (optional), short read assembly, may be used for assembly. Should be from the same sample as the long reads
 #short_read_assembly: /path/to/short_read_assembly.fasta
 
@@ -59,10 +59,10 @@ assemblers: # uncomment assemblers to use them
  - custom_assembly # requires custom_assembly_path
 # - metaflye
 # - hifiasm_meta
-# - operaMS # requires short_read_assembly and operaMS_path, performs a hybrid assembly
+# - operaMS # hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
 
 short_read_binning: false # requires short_reads_1 and short_reads_2
-short_read_cobinning: false # requires short_reads_1 and short_reads_2, uses both short and long reads for binning
+short_read_cobinning: false # requires auxiliary_short_reads_1/2 inside at least one hifi/ont sample
 additional_reads_cobinning: false # requires at least one additional_reads, uses both the long reads, and all additional reads for binning
 
 binning: true

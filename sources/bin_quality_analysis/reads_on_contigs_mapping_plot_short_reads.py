@@ -285,7 +285,13 @@ yticks = plt.gca().get_yticks()
 plt.gca().set_yticks(yticks)
 plt.gca().set_yticklabels(['{:.0f}%'.format(x * 100) for x in yticks])
 
-plt.xticks(range(2), ["Aligned Read Count Ratio", "Alignment Length Ratio"])
+plt.xticks(
+    range(2),
+    ["Aligned reads\n(count)", "Aligned bases\n(length)"],
+    rotation=0,
+    ha="center",
+    fontsize=11
+)
 legend = plt.legend(loc='upper right', bbox_to_anchor=(1.45, 1), title="Quality", reverse=True)
 
 plt.tight_layout(rect=[0, 0, 1, 0.93])

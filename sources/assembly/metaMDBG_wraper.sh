@@ -1,5 +1,8 @@
 #!/bin/sh
 # This script assemble a set of reads into a metagenome, using MetaMDBG
+
+set -euo pipefail
+
 sample="$1"
 tmp_directory="$2"
 output="$3"

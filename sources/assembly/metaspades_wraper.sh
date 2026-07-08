@@ -2,6 +2,8 @@
 # This script assembles a metagenomic short-read dataset using metaSPAdes
 # Optional long reads can be provided as supplementary data
 
+set -euo pipefail
+
 # Get parameters
 reads_1="$1"
 reads_2="$2"
@@ -32,12 +34,12 @@ spades.py \
     -1 "$reads_1" \
     -2 "$reads_2" \
     -t "$threads" \
-    -m "$memory_gb"\
+    -m "$memory_gb" \
     -o "$output_directory"/tmp/ \
     $LONG_READ_ARG
 
 mv "$output_directory"/tmp/contigs.fasta "$output_directory"/assembly.fasta
 
 if [ "$cleanup" != "no" ] && [ -f "$output_directory/assembly.fasta" ]; then
-    rm -rf "$output_directory/tmp/"
+    rm -rf "$output_directory"/tmp/
 fi

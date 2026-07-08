@@ -1,6 +1,8 @@
 #!/bin/sh
 # This script assemble a set of reads into a metagenome, using Metaflye
 
+set -euo pipefail
+
 # Get parameters
 run="$1"
 output_directory="$2"

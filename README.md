@@ -135,7 +135,7 @@ outputs
         │   └── results/
         ├── <fraction_name>_reads.fastq # For either "mapped" or "unmapped" fraction analysis
         ├── <binner>_bins_short_reads_alignement                  # multiple choices in the binners field. Requires short_read_binning: true
-        ├── <binner>_bins_cobinning_alignement                    # multiple choices in the binners field. Requires short_read_cobinning: true
+        ├── <binner>_bins_cobinning_alignement                    # multiple choices in the binners field. Requires short_read_cobinning: true and auxiliary_short_reads_1/2 on a long-read sample
         ├── <binner>_bins_additional_reads_cobinning_alignement   # multiple choices in the binners field. Requires additional_reads_cobinning: true
         ├── <binner>_bins_reads_alignement                        # multiple choices in the binners field. Requires binning: true
         │   ├── bins
