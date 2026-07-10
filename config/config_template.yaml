@@ -5,7 +5,7 @@ analysis_name: test_1_technology_sample # Used to name the logs files
 # technology options: hifi, ont, illumina
 # Sample model:
 # - hifi and ont samples must define read_path.
-# - hifi and ont samples may optionally define auxiliary_short_reads_1/2 for hybrid tools such as OperaMS and short_read_cobinning.
+# - hifi and ont samples may optionally define auxiliary_short_reads for hybrid tools such as OperaMS and/or short_read_cobinning.
 # - illumina samples must define read_path: none and short_reads_1/short_reads_2.
 # - Do not define short_reads_1/short_reads_2 inside hifi or ont samples.
 # - Do not define auxiliary_short_reads_1/2 inside illumina samples.
@@ -14,8 +14,8 @@ samples:
  - name: hifi_1perc
    technology: hifi
    read_path: /projects/genscale/amashi/data/raw/hifi/zymoD6331_sub1.fastq
-   # auxiliary_short_reads_1: /path/to/illumina_R1.fastq.gz
-   # auxiliary_short_reads_2: /path/to/illumina_R2.fastq.gz
+   auxiliary_short_reads_1: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R1.fastq.gz
+   auxiliary_short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
 
  - name: ont_1perc
    technology: ont
@@ -23,11 +23,11 @@ samples:
    # auxiliary_short_reads_1: /path/to/illumina_R1.fastq.gz
    # auxiliary_short_reads_2: /path/to/illumina_R2.fastq.gz
 
- - name: illumina_1perc
-   technology: illumina
-   short_reads_1: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R1.fastq.gz
-   short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
-   read_path: none
+# - name: illumina_1perc
+#   technology: illumina
+#   short_reads_1: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R1.fastq.gz
+#   short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
+#   read_path: none
 
 
 # (Optional): Pre-assembled short-read contig file used by OPERA-MS only, should be from the same sample as the long reads.
@@ -80,8 +80,8 @@ assemblers: # uncomment assemblers to use them
  - metaMDBG
 # - metaflye
 # - hifiasm_meta
- - metaspades
-# - operaMS # hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
+# - metaspades
+ - operaMS # hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
 # - custom_assembly # requires custom_assembly_path
 
 ### Binning ###
@@ -97,7 +97,7 @@ binners:
 # Binning modes decide which read coverage is used:
 
 long_read_binning: true   # main long reads on contigs, uses: outputs/{sample}/{assembler}/reads_on_contigs.bam
-short_read_binning: true  # Illumina reads on metaspades assemblies, uses : outputs/{sample}/{assembler}/short_reads_on_contigs.bam
+short_read_binning: false  # Illumina reads on metaspades assemblies, uses : outputs/{sample}/{assembler}/short_reads_on_contigs.bam
 short_read_cobinning: false  # long-read coverage + auxiliary short-read coverage
 additional_reads_cobinning: false # main long reads + additional long-read datasets
 
@@ -172,7 +172,7 @@ rule_hifiasm_meta_assembly:
 rule_operaMS_assembly: 
   threads: 16
   memory: 50000 
-  time: 24*60 #in minutes
+  time: 48*60 #in minutes
 
 rule_metaspades_assembly:
   threads: 16
