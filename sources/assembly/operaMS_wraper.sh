@@ -21,6 +21,13 @@ install_missing_perl_modules() {
         exit 1
     fi
 
+    TOOLS_DIR="$opera_path/tools_opera_ms"
+    mkdir -p "$TOOLS_DIR"
+
+    if [ ! -x "$TOOLS_DIR/perl" ]; then
+        ln -sf /usr/bin/perl "$TOOLS_DIR/perl"
+    fi
+
     export PERL5LIB="${CONDA_PREFIX}/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
 
     if ! perl -MSwitch -e 1 2>/dev/null; then
