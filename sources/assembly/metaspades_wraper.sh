@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # This script assembles a metagenomic short-read dataset using metaSPAdes
 # Optional long reads can be provided as supplementary data
 

@@ -1,9 +1,11 @@
 # Mapler (MAEPLR)
-Metagenome Assembly and Evaluation Pipeline for Long Reads
+Metagenome Assembly and Evaluation Pipeline
 
 
 ## Description
-The aim of this tool is to evaluate HiFi long-reads metagenomic assemblies, and it can either perform the assembly itself using multiple state-of-the-art assemblers (metaMDBG, metaflye, hifiasm-meta), or evaluate user-submitted assemblies. In addition to classifying assembly bins in classical quality categories according to their marker gene content and taxonomic assignment, Mapler analyzes the alignment of reads on contigs. It does this by calculating the ratio of mapped reads and bases, and separately analyzes mapped and unmapped reads via their k-mer frequency, read quality, and taxonomic assignment. These results are displayed in the form of text reports and plots.
+Mapler is a Snakemake pipeline for metagenomic assembly, binning and evaluation from PacBio HiFi, Oxford Nanopore and Illumina reads.
+
+Mapler can run long-read, short-read and hybrid assemblers, perform binning, and evaluate assemblies and MAGs using mapping-based metrics, reference-based analyses, taxonomic assignment and read-quality reports. It can also evaluate user-submitted assemblies and bins.
 
 ## Installation
 
@@ -81,6 +83,10 @@ Details on how to configure this file are written as comments in the template. T
 - Controls: allowing a choice among multiple non-exclusive options, or a binary choice on whether the analysis is run (true) or not (false)
 - Parameters: functional parameters define values that can be adjusted for certain analyses, while resource parameters allow users to configure memory, threads, and execution time
 
+Input samples are described in the configuration file. Each sample has a sequencing technology (`hifi`, `ont` or `illumina`), and Mapler automatically prevents incompatible tool/input combinations, such as running a short-read assembler on long-read data. Detailed examples and comments are provided in `config/config_template.yaml`.
+
+For hybrid analyses, long-read samples may optionally include auxiliary Illumina paired-end reads. These auxiliary short reads are used by hybrid tools such as OPERA-MS and short-read co-binning. See `config/config_template.yaml` for examples.
+
 <details>
 	<summary>Multiple user-provided assemblies and binning</summary>
 
@@ -95,8 +101,10 @@ Details on how to configure this file are written as comments in the template. T
    ```bash
    samples: 
       - name: <sample_name>
+        technology: hifi
         read_path: </read/path.fastq>
       - name: <another_sample_name>
+        technology: ont
         read_path: </read/path.fastq>
    [...]
    assemblers: # uncomment assemblers to use them
@@ -116,12 +124,19 @@ Details on how to configure this file are written as comments in the template. T
 # Comments describe the required configuration of the config file
 outputs
 └── <sample_name>
+    ├── long_reads_on_reference.<reference>.bam # Requires reference_mapping_evaluation: true
+    ├── short_reads_on_reference.<reference>.bam # Requires reference_mapping_evaluation: true
     └── <assembler> # multiple choice in the assemblers field
         ├── assembly.fasta
         ├── fastqc # Requires fraction_evaluation_tools.short_reads: [fastqc]
         │   └── <fraction_name> # multiple choice in the fractions field
-        │       ├── fastqc_report.html
-        │       └── <fraction_name>_fastqc.zip
+        │       ├── R1_fastqc.html
+        │       ├── R1_fastqc.zip
+        │       ├── R2_fastqc.html
+        │       └── R2_fastqc.zip
+        ├── nanoplot # Requires fraction_evaluation_tools.long_reads: [nanoplot]
+        │   └── <fraction_name>
+        │       └── NanoPlot-report.html
         ├── kat # Requires kat: true
         │   ├── kat-plot.pdf # Requires both "mapped" and "unmapped" fractions
         │   └── <fraction_name>-stats.tsv
@@ -134,10 +149,10 @@ outputs
         │   ├── report.txt
         │   └── results/
         ├── <fraction_name>_reads.fastq # For either "mapped" or "unmapped" fraction analysis
-        ├── <binner>_bins_short_reads_alignement                  # multiple choices in the binners field. Requires short_read_binning: true
-        ├── <binner>_bins_cobinning_alignement                    # multiple choices in the binners field. Requires short_read_cobinning: true and auxiliary_short_reads_1/2 on a long-read sample
-        ├── <binner>_bins_additional_reads_cobinning_alignement   # multiple choices in the binners field. Requires additional_reads_cobinning: true
-        ├── <binner>_bins_reads_alignement                        # multiple choices in the binners field. Requires binning: true
+        ├── <binner>_bins_reads_alignement                        # Requires binning: true and long_read_binning: true
+        ├── <binner>_bins_short_reads_alignement                  # Requires binning: true and short_read_binning: true
+        ├── <binner>_bins_cobinning_alignement                    # Requires binning: true, short_read_cobinning: true and auxiliary_short_reads_1/2 on a long-read sample
+        ├── <binner>_bins_additional_reads_cobinning_alignement   # Requires binning: true and additional_reads_cobinning: true
         │   ├── bins
         │   │   ├── bin.1.fa
         │   │   ├── ...
@@ -152,7 +167,8 @@ outputs
         │   └── read_contig_mapping.txt # Requires both checkm: true and read_mapping_evaluation: true
         ├── reads_on_contigs.bam
         ├── reads_on_contigs.bam.bai
-        ├── reads_on_reference.<reference>.bam # Multiple choices in the reference_genomes field. Requires reference_mapping_evaluation:true
+        ├── short_reads_on_contigs.bam # Requires short_read_mapping_evaluation: true or short_read_binning: true
+        ├── auxiliary_short_reads_on_contigs.bam # Requires short_read_cobinning: true
         ├── contigs_on_reference.<reference>.bam # Multiple choices in the reference_genomes field. Requires contigs_on_reference_mapping:true
         └──  reads_on_contigs_mapping_evaluation # Requires read_mapping_evaluation: true
             └── report.txt
@@ -176,14 +192,21 @@ Here's an example of read_contig_mapping_plot.pdf:
 
 ### Analysis of reads by category
 In samples where a significant proportion of the reads is not assembled, it can be useful to compare the set of reads that are represented by the assembly (mapped reads) with the set of reads that are not (unmapped reads).
-Mapler includes three read set analyses :
+Fractions can include all reads (`full`), reads mapped to contigs (`mapped`) and reads not mapped to contigs (`unmapped`). Long-read quality reports use NanoPlot, while Illumina paired-end quality reports use FastQC. Other optional analyses can compare taxonomic assignment and k-mer abundance between fractions.
+
+Mapler includes these read set analyses:
+<details>
+	<summary>NanoPlot</summary>
+
+   NanoPlot reports long-read quality metrics for selected fractions when `fraction_evaluation_tools.long_reads` includes `nanoplot`.
+</details>
 <details>
 	<summary>FastQC</summary>
    
-   With fastQC, it's possible to look into basic differences between the sets of reads. Generally, the unmapped reads are slightly shorter and of slightly worse quality than the assembled reads on average. 
+   With FastQC, it's possible to look into basic differences between Illumina paired-end read fractions. Generally, the unmapped reads are slightly shorter and of slightly worse quality than the assembled reads on average.
    They can also tend to have a different GC ratio, but this is unlikely to reflect an actual assembly bias and more likely to be the result of a particular high abundance population being assembled better and happening to have a specific GC ratio.
 
-Here's an example of fastqc_report.html: 
+Here's an example of a FastQC HTML report:
 ![Per base sequence quality plot](https://gitlab.inria.fr/-/project/48336/uploads/5b9bc2c9322a112c9799f9c49fbd9a37/image.png)
 </details>
 <details>
@@ -232,6 +255,8 @@ Here's an example of fastqc_report.html:
 Assembly is performed with: metaMDBG ([git](https://github.com/GaetanBenoitDev/metaMDBG), [article](https://doi.org/10.1038/s41587-023-01983-6)),
 hifiasm-meta ([git](https://github.com/xfengnefx/hifiasm-meta), [article](https://www.nature.com/articles/s41592-022-01478-3)),
 metaflye ([git](https://github.com/mikolmogorov/Flye), [article](https://www.nature.com/articles/s41592-020-00971-x)),
+myloasm ([git](https://github.com/bluenote-1577/myloasm)),
+metaSPAdes ([git](https://github.com/ablab/spades), [article](https://genome.cshlp.org/content/27/5/824)),
 OPERA-MS ([git](https://github.com/CSB5/OPERA-MS), [article](https://www.nature.com/articles/s41587-019-0191-2)).
 Binning is performed with MetaBAT2 ([code](https://bitbucket.org/berkeleylab/metabat/src/master/), [article](https://pmc.ncbi.nlm.nih.gov/articles/PMC6662567/)).
 Evaluation is performed with: 
@@ -239,10 +264,11 @@ checkM2 ([git](https://github.com/chklovski/CheckM2), [article](https://www.natu
 GTDB-Tk ([git](https://github.com/Ecogenomics/GTDBTk), [article](https://academic.oup.com/bioinformatics/article/36/6/1925/5626182)),
 MetaQUAST ([git](https://github.com/ablab/quast), [article](https://academic.oup.com/bioinformatics/article/32/7/1088/1743987)),
 FastQC ([git](https://github.com/s-andrews/FastQC), [website](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)),
+NanoPlot ([git](https://github.com/wdecoster/NanoPlot), [article](https://academic.oup.com/bioinformatics/article/34/15/2666/4934939)),
 Kraken2 ([git](https://github.com/DerrickWood/kraken2), [article](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1891-0)),
 Krona ([git](https://github.com/marbl/Krona), [article](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-12-385)),
 KAT ([git](https://github.com/TGAC/KAT), [article](https://academic.oup.com/bioinformatics/article/33/4/574/2664339)).
-Additionally, minimap2, pysam, biopython, pandas, matplotlib and numpy were used to perform custom evaluation
+Additionally, minimap2, pysam, biopython, pandas, matplotlib and numpy are used to produce custom mapping-based reports.
 
 ## FAQ
 <details>
@@ -268,8 +294,7 @@ Additionally, minimap2, pysam, biopython, pandas, matplotlib and numpy were used
 <details>
 	<summary>Does mapler accept compressed input files ?</summary>
 
-   Most rules accept gzip compressed reads, although there is one exception : OPERA-MS assembly. 
-   It is however recommended to use uncompressed reads, as Mapler uses multiple programs that would otherwise each decompress the reads internally.
+   Most Mapler rules accept gzip-compressed FASTQ files. Some third-party tools, especially OPERA-MS, may be more restrictive; if OPERA-MS fails with compressed reads, use uncompressed FASTQ files.
 </details>
 
 <details>

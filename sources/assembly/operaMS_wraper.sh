@@ -28,6 +28,13 @@ install_missing_perl_modules() {
         ln -sf /usr/bin/perl "$TOOLS_DIR/perl"
     fi
 
+    if ! command -v samtools >/dev/null 2>&1; then
+        echo "samtools is missing from the OPERA-MS conda environment." >&2
+        exit 1
+    fi
+
+    ln -sf "$(command -v samtools)" "$TOOLS_DIR/samtools"
+
     export PERL5LIB="${CONDA_PREFIX}/lib/perl5${PERL5LIB:+:${PERL5LIB}}"
 
     if ! perl -MSwitch -e 1 2>/dev/null; then
