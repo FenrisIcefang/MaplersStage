@@ -83,7 +83,7 @@ Details on how to configure this file are written as comments in the template. T
 - Controls: allowing a choice among multiple non-exclusive options, or a binary choice on whether the analysis is run (true) or not (false)
 - Parameters: functional parameters define values that can be adjusted for certain analyses, while resource parameters allow users to configure memory, threads, and execution time
 
-Input samples are described in the configuration file. Each sample has a sequencing technology (`hifi`, `ont` or `illumina`), and Mapler automatically prevents incompatible tool/input combinations, such as running a short-read assembler on long-read data. Detailed examples and comments are provided in `config/config_template.yaml`.
+Input samples are described in the configuration file. Each sample has a sequencing technology (`hifi`, `ont` or `illumina`), which allows Mapler to apply the appropriate parameters and tool logic for each data type. The pipeline also prevents incompatible tool/input combinations, such as running a short-read assembler on long-read data. Detailed examples and comments are provided in `config/config_template.yaml`.
 
 For hybrid analyses, long-read samples may optionally include auxiliary Illumina paired-end reads. These auxiliary short reads are used by hybrid tools such as OPERA-MS and short-read co-binning. See `config/config_template.yaml` for examples.
 
