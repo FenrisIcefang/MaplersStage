@@ -89,6 +89,26 @@ if("operaMS" in config["assemblers"]) :
         shell : "./sources/assembly/operaMS_wraper.sh {params.operaMS_path} {input.long_reads} {input.auxiliary_short_read_1} {input.auxiliary_short_read_2} {params.short_read_assembly} {params.tmp_directory} {output} {params.cleanup} {threads}"
 
 
+if("hylight" in config["assemblers"]) :
+    rule hylight_assembly :
+        params :
+            expand("{name}", name=get_samples("name")),
+            tmp_directory="outputs/{sample}/hylight/tmp/",
+            cleanup=get_cleanup_tmp()
+        conda : "../envs/hylight.yaml"
+        threads : config["rule_hylight_assembly"]["threads"]
+        resources :
+            cpus_per_task = config["rule_hylight_assembly"]["threads"],
+            mem_mb = config["rule_hylight_assembly"]["memory"],
+            runtime = eval(config["rule_hylight_assembly"]["time"]),
+        input :
+            long_reads = get_long_read_path,
+            auxiliary_short_read_1 = lambda wildcards: get_auxiliary_short_read("auxiliary_short_reads_1", wildcards),
+            auxiliary_short_read_2 = lambda wildcards: get_auxiliary_short_read("auxiliary_short_reads_2", wildcards),
+        output : "outputs/{sample}/hylight/assembly.fasta"
+        shell : "./sources/assembly/hylight_wraper.sh {input.long_reads} {input.auxiliary_short_read_1} {input.auxiliary_short_read_2} {params.tmp_directory} {output} {params.cleanup} {threads}"
+
+
 if("metaspades" in config["assemblers"]) :
     rule metaspades_assembly :
         params :

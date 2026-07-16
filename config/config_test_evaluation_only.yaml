@@ -82,7 +82,8 @@ assemblers: # uncomment assemblers to use them
 # - metaflye
 # - hifiasm_meta
 # - metaspades
-# - operaMS # hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
+# - hylight # recommended hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
+# - operaMS # legacy/experimental hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
  - custom_assembly # requires custom_assembly_path
 
 ### Binning ###
@@ -169,6 +170,11 @@ rule_operaMS_assembly:
   threads: 8
   memory: 1000 
   time: 5*24*60 #in minutes
+
+rule_hylight_assembly:
+  threads: 8
+  memory: 2000
+  time: 2*24*60 #in minutes
 
 rule_metaspades_assembly:
   threads: 8

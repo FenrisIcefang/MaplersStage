@@ -93,12 +93,14 @@ ASSEMBLER_COMPATIBILITY = {
     "myloasm": ["hifi", "ont"],
     "hifiasm_meta": ["hifi"],
     "operaMS": ["hifi", "ont"],
+    "hylight": ["hifi", "ont"],
     "metaspades": ["illumina"],
     "custom_assembly": ["hifi", "ont", "illumina"],
 }
 
 ALLOWED_TECHNOLOGIES = ["hifi", "ont", "illumina"]
 SHORT_READ_ASSEMBLERS = ["metaspades"]
+HYBRID_ASSEMBLERS = ["operaMS", "hylight"]
 ALLOWED_BINNERS = ["metabat2"]
 BINNING_MODE_KEYS = [
     "long_read_binning",
@@ -412,16 +414,17 @@ def validate_sample_technology_config():
             for sample in config["samples"]
             if sample["technology"] in ASSEMBLER_COMPATIBILITY[assembler]
             and (
-                assembler != "operaMS"
+                assembler not in HYBRID_ASSEMBLERS
                 or sample_name_has_auxiliary_short_reads(sample["name"])
             )
         ]
 
         if len(compatible_samples) == 0:
-            if assembler == "operaMS":
+            if assembler in HYBRID_ASSEMBLERS:
                 raise ValueError(
-                    "Assembler 'operaMS' requires at least one hifi/ont sample "
-                    "with auxiliary_short_reads_1 and auxiliary_short_reads_2."
+                    f"Hybrid assembler '{assembler}' requires at least one "
+                    "hifi/ont sample with auxiliary_short_reads_1 and "
+                    "auxiliary_short_reads_2."
                 )
 
             sample_tech_summary = [
@@ -441,11 +444,28 @@ def validate_sample_technology_config():
             for assembler in config["assemblers"]
             if sample["technology"] in ASSEMBLER_COMPATIBILITY[assembler]
             and (
-                assembler != "operaMS"
+                assembler not in HYBRID_ASSEMBLERS
                 or sample_name_has_auxiliary_short_reads(sample["name"])
             )
         ]
         if len(compatible_assemblers) == 0:
+            technology_compatible_assemblers = [
+                assembler
+                for assembler in config["assemblers"]
+                if sample["technology"] in ASSEMBLER_COMPATIBILITY[assembler]
+            ]
+            hybrid_technology_compatible_assemblers = [
+                assembler
+                for assembler in technology_compatible_assemblers
+                if assembler in HYBRID_ASSEMBLERS
+            ]
+            if (
+                len(technology_compatible_assemblers) > 0
+                and len(technology_compatible_assemblers) == len(hybrid_technology_compatible_assemblers)
+                and not sample_name_has_auxiliary_short_reads(sample["name"])
+            ):
+                continue
+
             raise ValueError(
                 f"Sample '{sample['name']}' with technology '{sample['technology']}' "
                 "has no compatible assembler in config['assemblers']."
@@ -465,7 +485,7 @@ def get_compatible_sample_assembler_pairs(require_long_reads=False, require_shor
         for assembler in config["assemblers"]:
             if allowed_assemblers is not None and assembler not in allowed_assemblers:
                 continue
-            if assembler == "operaMS" and not sample_name_has_auxiliary_short_reads(sample_name):
+            if assembler in HYBRID_ASSEMBLERS and not sample_name_has_auxiliary_short_reads(sample_name):
                 continue
             if technology in ASSEMBLER_COMPATIBILITY[assembler]:
                 pairs.append({"sample": sample_name, "assembler": assembler})

@@ -72,7 +72,7 @@ checkm_database: outputs/CheckM2_database/uniref100.KO.1.dmnd #if it doesn't exi
 
 # Temporary assembly files are removed by default after the final assembly.fasta is succesfully generated.
 # Use cleanup_tmp: "no" to keep temporary files for debugging or manual inspection no matter the outcome.
-cleanup_tmp: yes
+cleanup_tmp: no
 
 ### Assembly ###
 # Assemblers create contigs/assembly.fasta.
@@ -81,7 +81,8 @@ assemblers: # uncomment assemblers to use them
 # - metaflye
 # - hifiasm_meta
 # - metaspades
- - operaMS # hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
+ - hylight # recommended hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
+# - operaMS # legacy/experimental hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
 # - custom_assembly # requires custom_assembly_path
 
 ### Binning ###
@@ -173,6 +174,11 @@ rule_operaMS_assembly:
   threads: 16
   memory: 50000 
   time: 48*60 #in minutes
+
+rule_hylight_assembly:
+  threads: 32
+  memory: 60000
+  time: 48*60 # in minutes
 
 rule_metaspades_assembly:
   threads: 16

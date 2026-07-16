@@ -85,7 +85,7 @@ Details on how to configure this file are written as comments in the template. T
 
 Input samples are described in the configuration file. Each sample has a sequencing technology (`hifi`, `ont` or `illumina`), which allows Mapler to apply the appropriate parameters and tool logic for each data type. The pipeline also prevents incompatible tool/input combinations, such as running a short-read assembler on long-read data. Detailed examples and comments are provided in `config/config_template.yaml`.
 
-For hybrid analyses, long-read samples may optionally include auxiliary Illumina paired-end reads. These auxiliary short reads are used by hybrid tools such as OPERA-MS and short-read co-binning. See `config/config_template.yaml` for examples.
+For hybrid analyses, long-read samples may optionally include auxiliary Illumina paired-end reads. These auxiliary short reads are required by hybrid assemblers such as OPERA-MS or HyLight, and can also be used for short-read co-binning. See `config/config_template.yaml` for examples.
 
 <details>
 	<summary>Multiple user-provided assemblies and binning</summary>
@@ -115,7 +115,7 @@ For hybrid analyses, long-read samples may optionally include auxiliary Illumina
    # - metabat2
     - <custom_binning_process>
    ```
-   Please note that <custom_assembly_process> cannot have the same name as any of the built-in assembly processes (metaMDBG, custom_assembly, metaflye, hifiasm_meta, operaMS). Likewise, the <custom_binning_process> cannot have the same name as any of the built-in binning processes (metabat2, custom)
+   Please note that <custom_assembly_process> cannot have the same name as any of the built-in assembly processes (metaMDBG, custom_assembly, metaflye, myloasm, hifiasm_meta, metaspades, operaMS, hylight). Likewise, the <custom_binning_process> cannot have the same name as any of the built-in binning processes (metabat2, custom)
 
 </details>
 
@@ -257,6 +257,7 @@ hifiasm-meta ([git](https://github.com/xfengnefx/hifiasm-meta), [article](https:
 metaflye ([git](https://github.com/mikolmogorov/Flye), [article](https://www.nature.com/articles/s41592-020-00971-x)),
 myloasm ([git](https://github.com/bluenote-1577/myloasm)),
 metaSPAdes ([git](https://github.com/ablab/spades), [article](https://genome.cshlp.org/content/27/5/824)),
+HyLight ([git](https://github.com/LuoGroup2023/HyLight)),
 OPERA-MS ([git](https://github.com/CSB5/OPERA-MS), [article](https://www.nature.com/articles/s41587-019-0191-2)).
 Binning is performed with MetaBAT2 ([code](https://bitbucket.org/berkeleylab/metabat/src/master/), [article](https://pmc.ncbi.nlm.nih.gov/articles/PMC6662567/)).
 Evaluation is performed with: 
