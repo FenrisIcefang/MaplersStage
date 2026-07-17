@@ -105,5 +105,8 @@ Carnet des modifications locales
 - Compression des assemblies finales en assembly.fasta.gz.
   Raison: les regles d'assemblage produisent maintenant outputs/{sample}/{assembler}/assembly.fasta.gz via un finalizer commun, et les regles downstream consomment ce chemin compresse.
 
+- Compression des FASTQ intermediaires de fractions mapped/unmapped.
+  Raison: les fractions long reads et les fractions Illumina pour FastQC sont maintenant produites en .fastq.gz, sans copie compressee de la fraction full.
+
 - Aucun commit et aucun push n'ont ete effectues.
   Raison: respecter la regle de travail locale; toute action git de commit ou push necessite une permission explicite.

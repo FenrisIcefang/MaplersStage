@@ -148,7 +148,7 @@ outputs
         ├── metaquast # Requires metaquast: true
         │   ├── report.txt
         │   └── results/
-        ├── <fraction_name>_reads.fastq # For either "mapped" or "unmapped" fraction analysis
+        ├── <fraction_name>_reads.fastq.gz # For either "mapped" or "unmapped" fraction analysis
         ├── <binner>_bins_reads_alignement                        # Requires binning: true and long_read_binning: true
         ├── <binner>_bins_short_reads_alignement                  # Requires binning: true and short_read_binning: true
         ├── <binner>_bins_cobinning_alignement                    # Requires binning: true, short_read_cobinning: true and auxiliary_short_reads_1/2 on a long-read sample

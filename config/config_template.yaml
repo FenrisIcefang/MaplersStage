@@ -13,13 +13,13 @@ analysis_name: test_1_technology_sample # Used to name the logs files
 samples:
  - name: hifi_1perc
    technology: hifi
-   read_path: /projects/genscale/amashi/data/raw/hifi/zymoD6331_sub1.fastq
+   read_path: /projects/genscale/amashi/data/raw/zymoD_hifi/zymoD6331_sub1.fastq
    auxiliary_short_reads_1: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R1.fastq.gz
    auxiliary_short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
 
  - name: ont_1perc
    technology: ont
-   read_path: /projects/genscale/amashi/data/raw/ont/PAY12289_barcode13_sub1_match.fastq.gz
+   read_path: /projects/genscale/amashi/data/raw/zymoD_ont/PAY12289_barcode13_sub1_match.fastq.gz
    # auxiliary_short_reads_1: /path/to/illumina_R1.fastq.gz
    # auxiliary_short_reads_2: /path/to/illumina_R2.fastq.gz
 
@@ -124,12 +124,12 @@ fraction_evaluation_tools:
 # For Illumina mapped/unmapped fractions, the extract_short_read_fractions.sh separates reads according to each read's mapping flag in the BAM. 
 # This means that is not a strict pair-level separation when read pairs have different mapping states.
   long_reads:
-#  - nanoplot
+  - nanoplot
   short_reads:
-#  - fastqc
+  - fastqc
 
-kraken2: false # requires kraken2db
-kat: false
+kraken2: true # requires kraken2db
+kat : true
 
 ##### Parameters #####
 ### Functional parameters ###
@@ -231,7 +231,7 @@ rule_extract_unmapped_reads:
 
 rule_kraken2: 
   threads: 8
-  memory: 50000 
+  memory: 100000
   time: 2*60 #in minutes
 
 rule_kat_sect: 

@@ -103,6 +103,7 @@ SHORT_READ_ASSEMBLERS = ["metaspades"]
 HYBRID_ASSEMBLERS = ["operaMS", "hylight"]
 ALLOWED_BINNERS = ["metabat2"]
 ASSEMBLY_FILENAME = "assembly.fasta.gz"
+READ_FRACTION_SUFFIX = ".fastq.gz"
 BINNING_MODE_KEYS = [
     "long_read_binning",
     "short_read_binning",
@@ -638,11 +639,17 @@ validate_reference_config()
 validate_fraction_evaluation_tools()
 validate_cleanup_config()
 
+def get_long_read_fraction_path(sample, assembler, fraction):
+    return f"outputs/{sample}/{assembler}/{fraction}_reads{READ_FRACTION_SUFFIX}"
+
+def get_fastqc_fraction_read_path(sample, assembler, fraction, mate):
+    return f"outputs/{sample}/{assembler}/fastqc/{fraction}/{mate}{READ_FRACTION_SUFFIX}"
+
 # Return the path to the reads of a fraction of an assembly 
 def get_read_path(wildcards) : 
     if(wildcards.fraction == "full") : 
         return get_long_read_path(wildcards)
-    return "outputs/" + wildcards.sample + "/" + wildcards.assembler + "/" + wildcards.fraction + "_reads.fastq"
+    return get_long_read_fraction_path(wildcards.sample, wildcards.assembler, wildcards.fraction)
 
 # Return the path to the reads of all fractions of an assembly 
 def get_all_read_path(wildcards) :
@@ -665,12 +672,12 @@ def get_reference(reference_name) :
 def get_fastqc_R1(wildcards):
     if wildcards.fraction == "full":
         return get_short_read("short_reads_1", wildcards)
-    return f"outputs/{wildcards.sample}/{wildcards.assembler}/fastqc/{wildcards.fraction}/R1.fastq"
+    return get_fastqc_fraction_read_path(wildcards.sample, wildcards.assembler, wildcards.fraction, "R1")
 
 def get_fastqc_R2(wildcards):
     if wildcards.fraction == "full":
         return get_short_read("short_reads_2", wildcards)
-    return f"outputs/{wildcards.sample}/{wildcards.assembler}/fastqc/{wildcards.fraction}/R2.fastq"
+    return get_fastqc_fraction_read_path(wildcards.sample, wildcards.assembler, wildcards.fraction, "R2")
 
 ##### Additional rules #####  
 include : "rules/assembly.smk"

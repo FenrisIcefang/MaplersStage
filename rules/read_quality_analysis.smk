@@ -8,15 +8,15 @@ if(nanoplot_enabled() or config["kraken2"] or config["kat"]) :
         input :
             mapping = "outputs/{sample}/{assembler}/reads_on_contigs.bam",    
         output :
-            mapped_reads = "outputs/{sample}/{assembler}/mapped_reads.fastq",
-            unmapped_reads = "outputs/{sample}/{assembler}/unmapped_reads.fastq",
+            mapped_reads = f"outputs/{{sample}}/{{assembler}}/mapped_reads{READ_FRACTION_SUFFIX}",
+            unmapped_reads = f"outputs/{{sample}}/{{assembler}}/unmapped_reads{READ_FRACTION_SUFFIX}",
         conda : "../envs/mapping.yaml"
         threads : config["rule_extract_unmapped_reads"]["threads"]
         resources :
             cpus_per_task = config["rule_extract_unmapped_reads"]["threads"],
             mem_mb=config["rule_extract_unmapped_reads"]["memory"],
             runtime=eval(config["rule_extract_unmapped_reads"]["time"]),
-        shell : "./sources/read_quality_analysis/extract_unmapped_reads.sh {input.mapping} {params.output_directory}"
+        shell : "./sources/read_quality_analysis/extract_unmapped_reads.sh {input.mapping} {output.mapped_reads} {output.unmapped_reads}"
 
 if(fastqc_enabled()) :
     rule fastqc : 
@@ -41,10 +41,10 @@ if(fastqc_enabled()) :
         input :
             bam = "outputs/{sample}/{assembler}/short_reads_on_contigs.bam"
         output :
-            mapped_R1 = "outputs/{sample}/{assembler}/fastqc/mapped/R1.fastq",
-            mapped_R2 = "outputs/{sample}/{assembler}/fastqc/mapped/R2.fastq",
-            unmapped_R1 = "outputs/{sample}/{assembler}/fastqc/unmapped/R1.fastq",
-            unmapped_R2 = "outputs/{sample}/{assembler}/fastqc/unmapped/R2.fastq"
+            mapped_R1 = f"outputs/{{sample}}/{{assembler}}/fastqc/mapped/R1{READ_FRACTION_SUFFIX}",
+            mapped_R2 = f"outputs/{{sample}}/{{assembler}}/fastqc/mapped/R2{READ_FRACTION_SUFFIX}",
+            unmapped_R1 = f"outputs/{{sample}}/{{assembler}}/fastqc/unmapped/R1{READ_FRACTION_SUFFIX}",
+            unmapped_R2 = f"outputs/{{sample}}/{{assembler}}/fastqc/unmapped/R2{READ_FRACTION_SUFFIX}"
         conda : "../envs/mapping.yaml"
         threads : config["rule_extract_unmapped_reads"]["threads"]
         resources :
