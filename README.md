@@ -85,7 +85,7 @@ Details on how to configure this file are written as comments in the template. T
 
 Input samples are described in the configuration file. Each sample has a sequencing technology (`hifi`, `ont` or `illumina`), which allows Mapler to apply the appropriate parameters and tool logic for each data type. The pipeline also prevents incompatible tool/input combinations, such as running a short-read assembler on long-read data. Detailed examples and comments are provided in `config/config_template.yaml`.
 
-For hybrid analyses, long-read samples may optionally include auxiliary Illumina paired-end reads. These auxiliary short reads are required by hybrid assemblers such as OPERA-MS or HyLight, and can also be used for short-read co-binning. See `config/config_template.yaml` for examples.
+For hybrid analyses, long-read samples may optionally include auxiliary Illumina paired-end reads. Support for hybrid assemblers such as OPERA-MS and HyLight is currently being integrated and tested. These auxiliary short reads can also be used for short-read co-binning. See `config/config_template.yaml` for examples.
 
 <details>
 	<summary>Multiple user-provided assemblies and binning</summary>
