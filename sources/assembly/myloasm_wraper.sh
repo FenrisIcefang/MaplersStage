@@ -1,7 +1,7 @@
-#!/bin/sh
-# This script assembles a set of reads into a metagenome using Myloasm
-
+#!/usr/bin/env bash
 set -euo pipefail
+
+# This script assembles a set of reads into a metagenome using Myloasm
 
 sample="$1"
 tmp_directory="$2"
@@ -19,8 +19,8 @@ if [ "$technology" = "hifi" ]; then
 fi
 
 myloasm "$sample" -o "$tmp_directory" -t "$threads" $MYLOASM_FLAGS
-mv "$tmp_directory/assembly_primary.fa" "$output"
+./sources/assembly/finalize_assembly_output.sh "$tmp_directory/assembly_primary.fa" "$output"
 
-if [ "$cleanup" != "no" ] && [ -f "$output" ]; then
+if [ "$cleanup" != "no" ] && [ -s "$output" ]; then
     rm -rf "$tmp_directory"
 fi

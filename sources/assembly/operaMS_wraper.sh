@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
 #SBATCH --time=3-00:00:00
 #SBATCH --mem=10G
 #SBATCH --cpus-per-task=1
-
-set -euo pipefail
 
 opera_path="$1"
 long_reads="$2"
@@ -72,8 +72,8 @@ perl "$opera_path"/OPERA-MS.pl \
     --long-read "$long_reads" \
     --out-dir "$tmp_directory"
 
-mv "$tmp_directory"/OPERA-MS_results/final_assembly.fasta "$output"
+./sources/assembly/finalize_assembly_output.sh "$tmp_directory"/OPERA-MS_results/final_assembly.fasta "$output"
 
-if [ "$cleanup" != "no" ] && [ -f "$output" ]; then
+if [ "$cleanup" != "no" ] && [ -s "$output" ]; then
     rm -rf "$tmp_directory"
 fi

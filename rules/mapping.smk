@@ -4,7 +4,7 @@ rule reads_on_contigs_mapping :
         expand("{sample}", sample=get_samples("name")),
         preset = get_longread_preset,
     input :
-        assembly = "outputs/{sample}/{assembler}/assembly.fasta",
+        assembly = f"outputs/{{sample}}/{{assembler}}/{ASSEMBLY_FILENAME}",
         reads = get_long_read_path,
     output : "outputs/{sample}/{assembler}/reads_on_contigs.bam"
     conda : "../envs/mapping.yaml"
@@ -24,7 +24,7 @@ if(
         params : 
             expand("{sample}", sample=get_samples("name")),
         input :
-            assembly = "outputs/{sample}/{assembler}/assembly.fasta",
+            assembly = f"outputs/{{sample}}/{{assembler}}/{ASSEMBLY_FILENAME}",
             R1 = lambda wildcards: get_short_read("short_reads_1", wildcards),
             R2 = lambda wildcards: get_short_read("short_reads_2", wildcards) 
         output : "outputs/{sample}/{assembler}/short_reads_on_contigs.bam"
@@ -41,7 +41,7 @@ if(is_binning_enabled() and short_read_cobinning_enabled()) :
         input :
             reads_1 = lambda wildcards: get_auxiliary_short_read("auxiliary_short_reads_1", wildcards),
             reads_2 = lambda wildcards: get_auxiliary_short_read("auxiliary_short_reads_2", wildcards),
-            assembly = "outputs/{sample}/{assembler}/assembly.fasta"
+            assembly = f"outputs/{{sample}}/{{assembler}}/{ASSEMBLY_FILENAME}"
         output : "outputs/{sample}/{assembler}/auxiliary_short_reads_on_contigs.bam"
         conda : "../envs/mapping.yaml"
         threads : config["rules_mapping"]["threads"]
@@ -66,7 +66,7 @@ if(is_binning_enabled() and additional_reads_cobinning_enabled()) :
             additional_reads = config["additional_reads"],
             preset = get_longread_preset,
         input :
-            assembly = "outputs/{sample}/{assembler}/assembly.fasta",
+            assembly = f"outputs/{{sample}}/{{assembler}}/{ASSEMBLY_FILENAME}",
             reads = get_additional_read_path
         output : "outputs/{sample}/{assembler}/{additional_read_name}_reads_on_contigs.bam",
         conda : "../envs/mapping.yaml"
@@ -115,7 +115,7 @@ if(config['reference_mapping_evaluation']) :
 if(config.get("contigs_on_reference_mapping", False)) :
     rule contigs_on_reference_mapping :
         input :
-            assembly = "outputs/{sample}/{assembler}/assembly.fasta",
+            assembly = f"outputs/{{sample}}/{{assembler}}/{ASSEMBLY_FILENAME}",
             reference = lambda wildcards: get_reference(wildcards.reference_name)
         output : "outputs/{sample}/{assembler}/contigs_on_reference.{reference_name}.bam"
         conda : "../envs/mapping.yaml"

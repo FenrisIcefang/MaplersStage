@@ -71,12 +71,12 @@ checkm_database: outputs/checkm_db/CheckM2_database/uniref100.KO.1.dmnd #if does
 
 ### Assembly and binning ###
 
-# Temporary assembly files are removed by default after the final assembly.fasta is successfully generated.
+# Temporary assembly files are removed by default after the final assembly.fasta.gz is successfully generated.
 # Use cleanup_tmp: "no" to keep temporary files for debugging or manual inspection no matter the outcome.
 cleanup_tmp: yes
 
 ### Assembly ###
-# Assemblers create contigs/assembly.fasta.
+# Assemblers create contigs/assembly.fasta.gz.
 assemblers: # uncomment assemblers to use them
 # - metaMDBG
 # - metaflye
@@ -109,7 +109,7 @@ metaquast: false # requires reference_genomes
 read_mapping_evaluation: true 
 short_read_mapping_evaluation: false # requires short_reads_1 and short_reads_2
 reference_mapping_evaluation: false # requires reference_genomes
-contigs_on_reference_mapping: false # maps assembly.fasta/contigs to reference_genomes; requires reference_genomes
+contigs_on_reference_mapping: false # maps assembly.fasta.gz/contigs to reference_genomes; requires reference_genomes
 
 # bins analysis
 checkm: true

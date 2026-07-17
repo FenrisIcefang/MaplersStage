@@ -7,7 +7,7 @@ output_directory="$3"
 second_reads_on_contigs="${@:4}"  # Optional, used for co-binning
 Ncpu=$(nproc)
 
-
+mkdir -p "$output_directory"
 
 echo ""
 echo "Summarizing conting depths..."

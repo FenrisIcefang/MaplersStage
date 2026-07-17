@@ -87,6 +87,9 @@ Carnet des modifications locales
 - Integration des auxiliary short reads pour les outils hybrides.
   Raison: short_reads_1/short_reads_2 restent reserves aux samples Illumina, tandis que auxiliary_short_reads_1/2 sont optionnels sur les samples HiFi/ONT et servent uniquement a OPERA-MS et au short_read_cobinning.
 
+- Integration de HyLight comme assembleur hybride.
+  Raison: HyLight utilise les long reads d'un sample HiFi/ONT et ses auxiliary_short_reads_1/2, avec creation temporaire d'un FASTQ interleaved dans le wrapper.
+
 - Renforcement de la validation du modele strict des samples.
   Raison: refuser explicitement short_reads_1/2 dans les samples HiFi/ONT et auxiliary_short_reads_1/2 dans les samples Illumina.
 
@@ -98,6 +101,9 @@ Carnet des modifications locales
 
 - Alignement architectural des configs de test avec config_template.yaml.
   Raison: config_test.yaml et config_test_evaluation_only.yaml exposent maintenant les memes options top-level que le template, comme cleanup_tmp, long_read_binning, contigs_on_reference_mapping, auxiliary_short_reads et les ressources metaspades, tout en conservant leur role de configs de test.
+
+- Compression des assemblies finales en assembly.fasta.gz.
+  Raison: les regles d'assemblage produisent maintenant outputs/{sample}/{assembler}/assembly.fasta.gz via un finalizer commun, et les regles downstream consomment ce chemin compresse.
 
 - Aucun commit et aucun push n'ont ete effectues.
   Raison: respecter la regle de travail locale; toute action git de commit ou push necessite une permission explicite.

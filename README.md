@@ -55,7 +55,7 @@ Either way, with 16 CPUs and 15G of RAM, it should require around 15 minutes, no
 ```bash
 outputs/test_dataset/
 └── metaMDBG
-    ├── assembly.fasta
+    ├── assembly.fasta.gz
     ├── metabat2_bins_reads_alignement
     │   ├── bins
     │   │   ├── bin.1.fa
@@ -92,7 +92,7 @@ For hybrid analyses, long-read samples may optionally include auxiliary Illumina
 
    To use multiple user-provided assemblies and binning, you can either run them one at a time, or put the corresponding files (via a copy or the creation of a symbolic link) the assembly and/or bins like this:
    ```bash
-   outputs/<sample_name>/<custom_assembly_process>/assembly.fasta
+   outputs/<sample_name>/<custom_assembly_process>/assembly.fasta.gz
    outputs/<sample_name>/<assembly>/<custom_binning_process>_bins_reads_alignement/bins/<bins.fa>
    ```
    
@@ -127,7 +127,7 @@ outputs
     ├── long_reads_on_reference.<reference>.bam # Requires reference_mapping_evaluation: true
     ├── short_reads_on_reference.<reference>.bam # Requires reference_mapping_evaluation: true
     └── <assembler> # multiple choice in the assemblers field
-        ├── assembly.fasta
+        ├── assembly.fasta.gz
         ├── fastqc # Requires fraction_evaluation_tools.short_reads: [fastqc]
         │   └── <fraction_name> # multiple choice in the fractions field
         │       ├── R1_fastqc.html

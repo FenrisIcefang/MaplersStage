@@ -23,11 +23,11 @@ samples:
    # auxiliary_short_reads_1: /path/to/illumina_R1.fastq.gz
    # auxiliary_short_reads_2: /path/to/illumina_R2.fastq.gz
 
-# - name: illumina_1perc
-#   technology: illumina
-#   short_reads_1: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R1.fastq.gz
-#   short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
-#   read_path: none
+ - name: illumina_1perc
+   technology: illumina
+   short_reads_1: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R1.fastq.gz
+   short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
+   read_path: none
 
 
 # (Optional): Pre-assembled short-read contig file used by OPERA-MS only, should be from the same sample as the long reads.
@@ -42,12 +42,7 @@ samples:
 # (Optional): Reference genomes used by MetaQUAST, reference_mapping_evaluation,
 # and contigs_on_reference_mapping.
 reference_genomes:
-  - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Akkermansia_muciniphila.fasta
   - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Escherichia_coli_B1109.fasta
-  - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Escherichia_coli_b2207.fasta
-  - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Escherichia_coli_B3008.fasta
-  - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Escherichia_coli_B766.fasta
-  - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Escherichia_coli_JM109.fasta
   - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Saccharomyces_cerevisiae.fasta
   - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Salmonella_enterica.fasta
 
@@ -70,18 +65,18 @@ checkm_database: outputs/CheckM2_database/uniref100.KO.1.dmnd #if it doesn't exi
 
 ##### Controls #####
 
-# Temporary assembly files are removed by default after the final assembly.fasta is succesfully generated.
+# Temporary assembly files are removed by default after the final assembly.fasta.gz is successfully generated.
 # Use cleanup_tmp: "no" to keep temporary files for debugging or manual inspection no matter the outcome.
-cleanup_tmp: no
+cleanup_tmp: yes
 
 ### Assembly ###
-# Assemblers create contigs/assembly.fasta.
+# Assemblers create contigs/assembly.fasta.gz.
 assemblers: # uncomment assemblers to use them
  - metaMDBG
-# - metaflye
-# - hifiasm_meta
-# - metaspades
- - hylight # recommended hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
+ - metaflye
+ - hifiasm_meta
+ - metaspades
+# - hylight # experimental hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
 # - operaMS # legacy/experimental hybrid assembler; requires hifi/ont samples with auxiliary_short_reads_1/2
 # - custom_assembly # requires custom_assembly_path
 
@@ -98,22 +93,18 @@ binners:
 # Binning modes decide which read coverage is used:
 
 long_read_binning: true   # main long reads on contigs, uses: outputs/{sample}/{assembler}/reads_on_contigs.bam
-short_read_binning: false  # Illumina reads on metaspades assemblies, uses : outputs/{sample}/{assembler}/short_reads_on_contigs.bam
-short_read_cobinning: false  # long-read coverage + auxiliary short-read coverage
+short_read_binning: true  # Illumina reads on metaspades assemblies, uses : outputs/{sample}/{assembler}/short_reads_on_contigs.bam
+short_read_cobinning: true  # long-read coverage + auxiliary short-read coverage
 additional_reads_cobinning: false # main long reads + additional long-read datasets
 
-# short_read_cobinning is kept as a legacy/hybrid mode and should remain
-# disabled by default until reviewed with the strict technology model.
-#
-# additional_reads_cobinning requires additional_reads to be defined.
 
 ### Evaluation ###
 # contig analysis
-metaquast: true # compares assembly.fasta to reference_genomes and reports assembly metrics; requires reference_genomes
+metaquast: true # compares assembly.fasta.gz to reference_genomes and reports assembly metrics; requires reference_genomes
 read_mapping_evaluation: true # evaluates long reads mapped back to assembled contigs; outputs reads_on_contigs_mapping_evaluation/report.txt
 short_read_mapping_evaluation: true # evaluates Illumina reads mapped back to assembled contigs; requires at least one illumina sample with short_reads_1 and short_reads_2
-reference_mapping_evaluation: false # maps raw reads to reference_genomes; outputs long_reads_on_reference.*.bam and short_reads_on_reference.*.bam; requires reference_genomes
-contigs_on_reference_mapping: false # maps assembly.fasta/contigs to reference_genomes; outputs contigs_on_reference.*.bam; requires reference_genomes
+reference_mapping_evaluation: true # maps raw reads to reference_genomes; outputs long_reads_on_reference.*.bam and short_reads_on_reference.*.bam; requires reference_genomes
+contigs_on_reference_mapping: true # maps assembly.fasta.gz/contigs to reference_genomes; outputs contigs_on_reference.*.bam; requires reference_genomes
 
 # bins analysis
 checkm: true
@@ -133,9 +124,9 @@ fraction_evaluation_tools:
 # For Illumina mapped/unmapped fractions, the extract_short_read_fractions.sh separates reads according to each read's mapping flag in the BAM. 
 # This means that is not a strict pair-level separation when read pairs have different mapping states.
   long_reads:
-  - nanoplot
+#  - nanoplot
   short_reads:
-  - fastqc
+#  - fastqc
 
 kraken2: false # requires kraken2db
 kat: false

@@ -1,7 +1,7 @@
 if(is_binning_enabled() and "metabat2" in get_configured_binners()) :
     rule metabat2_binning: 
         input: 
-            contigs =  "outputs/{sample}/{assembler}/assembly.fasta",
+            contigs =  f"outputs/{{sample}}/{{assembler}}/{ASSEMBLY_FILENAME}",
             alignement =  "outputs/{sample}/{assembler}/{reference_reads}_on_contigs.bam"
         conda: "../envs/metabat2.yaml",
         threads: config["rules_metabat2_binnings"]["threads"]
@@ -17,7 +17,7 @@ if(is_binning_enabled() and "metabat2" in get_configured_binners()) :
 if(is_binning_enabled() and short_read_cobinning_enabled() and "metabat2" in get_configured_binners()) :
     rule metabat2_cobinning_short_reads: 
         input: 
-            contigs =  "outputs/{sample}/{assembler}/assembly.fasta",
+            contigs =  f"outputs/{{sample}}/{{assembler}}/{ASSEMBLY_FILENAME}",
             alignement1 =  "outputs/{sample}/{assembler}/reads_on_contigs.bam",
             alignement2 =  "outputs/{sample}/{assembler}/auxiliary_short_reads_on_contigs.bam",
         conda: "../envs/metabat2.yaml",
@@ -34,7 +34,7 @@ if(is_binning_enabled() and short_read_cobinning_enabled() and "metabat2" in get
 if(is_binning_enabled() and additional_reads_cobinning_enabled() and "metabat2" in get_configured_binners()) :
     rule metabat2_cobinning_additional_reads: 
         input: 
-            contigs =  "outputs/{sample}/{assembler}/assembly.fasta",
+            contigs =  f"outputs/{{sample}}/{{assembler}}/{ASSEMBLY_FILENAME}",
             alignement =  "outputs/{sample}/{assembler}/reads_on_contigs.bam",
             additional_alignements =  expand("outputs/{{sample}}/{{assembler}}/{additional_reads_name}_reads_on_contigs.bam", additional_reads_name = [ar["name"] for ar in config["additional_reads"]]),
         conda: "../envs/metabat2.yaml",

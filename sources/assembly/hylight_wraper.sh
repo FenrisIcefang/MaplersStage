@@ -63,9 +63,9 @@ hylight \
     -o "$tmp_directory"
 
 if [ -s "$tmp_directory/final_contigs.fa" ]; then
-    cp "$tmp_directory/final_contigs.fa" "$output"
+    ./sources/assembly/finalize_assembly_output.sh "$tmp_directory/final_contigs.fa" "$output"
 elif [ -s "$tmp_directory/long_con_polished.fa" ]; then
-    cp "$tmp_directory/long_con_polished.fa" "$output"
+    ./sources/assembly/finalize_assembly_output.sh "$tmp_directory/long_con_polished.fa" "$output"
 else
     echo "HyLight did not produce final_contigs.fa or long_con_polished.fa" >&2
     echo "Content of tmp directory:" >&2
@@ -73,6 +73,6 @@ else
     exit 1
 fi
 
-if [ "$cleanup" != "no" ] && [ -f "$output" ]; then
+if [ "$cleanup" != "no" ] && [ -s "$output" ]; then
     rm -rf "$tmp_directory"
 fi

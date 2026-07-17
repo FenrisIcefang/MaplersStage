@@ -102,6 +102,7 @@ ALLOWED_TECHNOLOGIES = ["hifi", "ont", "illumina"]
 SHORT_READ_ASSEMBLERS = ["metaspades"]
 HYBRID_ASSEMBLERS = ["operaMS", "hylight"]
 ALLOWED_BINNERS = ["metabat2"]
+ASSEMBLY_FILENAME = "assembly.fasta.gz"
 BINNING_MODE_KEYS = [
     "long_read_binning",
     "short_read_binning",
@@ -687,7 +688,7 @@ replace kraken2 by sourmash for taxonomic assignation ?
 
 rule all :
     input :
-        compatible_expand("outputs/{sample}/{assembler}/assembly.fasta"),
+        compatible_expand(f"outputs/{{sample}}/{{assembler}}/{ASSEMBLY_FILENAME}"),
 
         # Read quality analysis (FastQC for short reads, NanoPlot for long reads, kraken2, kat)
         compatible_fraction_expand("outputs/{sample}/{assembler}/fastqc/{fraction}/R1_fastqc.html", require_short_reads=True)

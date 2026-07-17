@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
 # This script assembles a metagenomic short-read dataset using metaSPAdes
 # Optional long reads can be provided as supplementary data
-
-set -euo pipefail
 
 # Get parameters
 reads_1="$1"
 reads_2="$2"
 output_directory="$3"
-long_reads="$4"
-long_read_technology="$5"
-cleanup="${6:-yes}"
-threads="${7:-16}"
-memory_mb="${8:-250000}"
+output="$4"
+long_reads="$5"
+long_read_technology="$6"
+cleanup="${7:-yes}"
+threads="${8:-16}"
+memory_mb="${9:-250000}"
 
 # Convert memory from MB to GB for SPAdes -m
 memory_gb=$((memory_mb / 1000))
@@ -38,8 +39,8 @@ spades.py \
     -o "$output_directory"/tmp/ \
     $LONG_READ_ARG
 
-mv "$output_directory"/tmp/contigs.fasta "$output_directory"/assembly.fasta
+./sources/assembly/finalize_assembly_output.sh "$output_directory"/tmp/contigs.fasta "$output"
 
-if [ "$cleanup" != "no" ] && [ -f "$output_directory/assembly.fasta" ]; then
+if [ "$cleanup" != "no" ] && [ -s "$output" ]; then
     rm -rf "$output_directory"/tmp/
 fi

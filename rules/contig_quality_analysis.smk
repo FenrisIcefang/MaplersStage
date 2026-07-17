@@ -11,7 +11,7 @@ if(config["metaquast"]) :
             cpus_per_task = config["rule_metaquast"]["threads"],
             mem_mb=config["rule_metaquast"]["memory"],
             runtime=eval(config["rule_metaquast"]["time"]),
-        input : "outputs/{sample}/{assembler}/assembly.fasta",
+        input : f"outputs/{{sample}}/{{assembler}}/{ASSEMBLY_FILENAME}",
         output : directory("outputs/{sample}/{assembler}/metaquast/results/summary/TSV/"),
         shell : "sources/contig_quality_analysis/metaquast_wraper.sh {input} {params.output_directory} {params.min_identity} {params.reference_genomes} "
 if(config["metaquast"] and "abundance_information" in config) :

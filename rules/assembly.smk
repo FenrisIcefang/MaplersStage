@@ -12,7 +12,7 @@ if("metaMDBG" in config["assemblers"]) :
             mem_mb=config["rule_metaMDBG_assembly"]["memory"],
             runtime=eval(config["rule_metaMDBG_assembly"]["time"]),
         input : get_long_read_path,
-        output : "outputs/{sample}/metaMDBG/assembly.fasta"
+        output : f"outputs/{{sample}}/metaMDBG/{ASSEMBLY_FILENAME}"
         shell : "./sources/assembly/metaMDBG_wraper.sh {input} {params.tmp_directory} {output} {params.technology} {params.cleanup}"
 
 if("myloasm" in config["assemblers"]) :
@@ -29,7 +29,7 @@ if("myloasm" in config["assemblers"]) :
             mem_mb=config["rule_myloasm_assembly"]["memory"],
             runtime=eval(config["rule_myloasm_assembly"]["time"]),
         input : get_long_read_path,
-        output : "outputs/{sample}/myloasm/assembly.fasta"
+        output : f"outputs/{{sample}}/myloasm/{ASSEMBLY_FILENAME}"
         shell : "./sources/assembly/myloasm_wraper.sh {input} {params.tmp_directory} {output} {params.technology} {params.cleanup} {threads}"
 
 
@@ -47,8 +47,8 @@ if("metaflye" in config["assemblers"]) :
             mem_mb=config["rule_metaflye_assembly"]["memory"],
             runtime=eval(config["rule_metaflye_assembly"]["time"]),
         input : get_long_read_path,
-        output : "outputs/{sample}/metaflye/assembly.fasta",
-        shell : "./sources/assembly/metaflye_wraper.sh {input} {params.output_directory} {params.technology} {params.cleanup}"
+        output : f"outputs/{{sample}}/metaflye/{ASSEMBLY_FILENAME}",
+        shell : "./sources/assembly/metaflye_wraper.sh {input} {params.output_directory} {output} {params.technology} {params.cleanup}"
 
 if("hifiasm_meta" in config["assemblers"]) :
     rule hifiasm_meta_assembly :
@@ -63,8 +63,8 @@ if("hifiasm_meta" in config["assemblers"]) :
             mem_mb=config["rule_hifiasm_meta_assembly"]["memory"],
             runtime=eval(config["rule_hifiasm_meta_assembly"]["time"]),
         input : get_long_read_path,
-        output : "outputs/{sample}/hifiasm_meta/assembly.fasta",
-        shell : "./sources/assembly/hifiasm_meta_wraper.sh {input} {params.output_directory} {params.cleanup}"
+        output : f"outputs/{{sample}}/hifiasm_meta/{ASSEMBLY_FILENAME}",
+        shell : "./sources/assembly/hifiasm_meta_wraper.sh {input} {params.output_directory} {output} {params.cleanup}"
 
 
 if("operaMS" in config["assemblers"]) :
@@ -85,7 +85,7 @@ if("operaMS" in config["assemblers"]) :
             long_reads = get_long_read_path,
             auxiliary_short_read_1 = lambda wildcards: get_auxiliary_short_read("auxiliary_short_reads_1", wildcards),
             auxiliary_short_read_2 = lambda wildcards: get_auxiliary_short_read("auxiliary_short_reads_2", wildcards),
-        output : "outputs/{sample}/operaMS/assembly.fasta"
+        output : f"outputs/{{sample}}/operaMS/{ASSEMBLY_FILENAME}"
         shell : "./sources/assembly/operaMS_wraper.sh {params.operaMS_path} {input.long_reads} {input.auxiliary_short_read_1} {input.auxiliary_short_read_2} {params.short_read_assembly} {params.tmp_directory} {output} {params.cleanup} {threads}"
 
 
@@ -105,7 +105,7 @@ if("hylight" in config["assemblers"]) :
             long_reads = get_long_read_path,
             auxiliary_short_read_1 = lambda wildcards: get_auxiliary_short_read("auxiliary_short_reads_1", wildcards),
             auxiliary_short_read_2 = lambda wildcards: get_auxiliary_short_read("auxiliary_short_reads_2", wildcards),
-        output : "outputs/{sample}/hylight/assembly.fasta"
+        output : f"outputs/{{sample}}/hylight/{ASSEMBLY_FILENAME}"
         shell : "./sources/assembly/hylight_wraper.sh {input.long_reads} {input.auxiliary_short_read_1} {input.auxiliary_short_read_2} {params.tmp_directory} {output} {params.cleanup} {threads}"
 
 
@@ -126,12 +126,12 @@ if("metaspades" in config["assemblers"]) :
         input :
             reads_1 = lambda wildcards: get_short_read("short_reads_1", wildcards),
             reads_2 = lambda wildcards: get_short_read("short_reads_2", wildcards)
-        output : "outputs/{sample}/metaspades/assembly.fasta",
-        shell : "./sources/assembly/metaspades_wraper.sh {input.reads_1} {input.reads_2} {params.output_directory} {params.long_reads} {params.technology} {params.cleanup} {threads} {resources.mem_mb}"
+        output : f"outputs/{{sample}}/metaspades/{ASSEMBLY_FILENAME}",
+        shell : "./sources/assembly/metaspades_wraper.sh {input.reads_1} {input.reads_2} {params.output_directory} {output} {params.long_reads} {params.technology} {params.cleanup} {threads} {resources.mem_mb}"
 
 
 if("custom_assembly" in config["assemblers"]) :
     rule link_assembly : 
         input : config["custom_assembly_path"],
-        output : "outputs/{sample}/custom_assembly/assembly.fasta"
-        shell : "ln -sr {input} {output}"
+        output : f"outputs/{{sample}}/custom_assembly/{ASSEMBLY_FILENAME}"
+        shell : "./sources/assembly/finalize_assembly_output.sh {input} {output}"
