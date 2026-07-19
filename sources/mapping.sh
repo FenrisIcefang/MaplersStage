@@ -3,8 +3,8 @@
 #SBATCH --mem=10G
 #SBATCH --cpus-per-task=24
 #conda activate .snakemake/conda/5d2e4a1fd40405f7cd25f2b961322ceb_
-#./sources/mapping.sh outputs/zymo/metaMDBG/contigs_on_reference.Saccharomyces_cerevisiae.bam outputs/zymo/metaMDBG/assembly.fasta /groups/genscale/nimauric/ZymoD6331/Saccharomyces_cerevisiae.fasta
-#./sources/mapping.sh outputs/zymo/metaMDBG/contigs_on_reference.Salmonella_enterica.bam outputs/zymo/metaMDBG/assembly.fasta /groups/genscale/nimauric/ZymoD6331/Salmonella_enterica.fasta
+#./sources/mapping.sh outputs/zymo/metaMDBG/contigs_on_reference.Saccharomyces_cerevisiae.bam outputs/zymo/metaMDBG/assembly.fasta.gz /groups/genscale/nimauric/ZymoD6331/Saccharomyces_cerevisiae.fasta
+#./sources/mapping.sh outputs/zymo/metaMDBG/contigs_on_reference.Salmonella_enterica.bam outputs/zymo/metaMDBG/assembly.fasta.gz /groups/genscale/nimauric/ZymoD6331/Salmonella_enterica.fasta
 
 set -eu
 
@@ -24,5 +24,4 @@ else
 fi
 
 samtools index "$output"
-
 

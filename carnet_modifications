@@ -1,0 +1,112 @@
+Carnet des modifications locales
+
+- Deplacement de la technologie dans chaque sample de configuration.
+  Raison: permettre un meme lancement Mapler avec des samples de technologies differentes, par exemple ONT, HiFi et Illumina dans le meme fichier YAML.
+
+- Ajout d'une table ASSEMBLER_COMPATIBILITY dans le Snakefile.
+  Raison: centraliser la compatibilite entre technologies et assembleurs, afin d'eviter que rule all demande des combinaisons impossibles comme metaspades avec un sample HiFi ou metaMDBG avec un sample Illumina.
+
+- Ajout de fonctions de validation dans le Snakefile.
+  Raison: arreter le pipeline tot avec un message clair si un sample n'a pas de technology, si une technology est inconnue, si un assembler n'est pas declare dans la table de compatibilite, ou si un sample n'a aucun assembler compatible.
+
+- Ajout de fonctions pour construire les couples compatibles sample/assembler.
+  Raison: remplacer le produit cartesien global sample x assembler par une liste filtree qui contient seulement les combinaisons autorisees.
+
+- Modification de rule all pour utiliser les couples compatibles.
+  Raison: eviter que Snakemake essaie de produire des sorties pour des combinaisons incompatibles, tout en gardant assemblers comme parametre global dans la config.
+
+- Separation logique des sorties long reads et short reads dans rule all.
+  Raison: certaines sorties dependent de read_path et ne doivent etre demandees que pour les samples HiFi/ONT, tandis que les sorties short reads doivent etre demandees seulement pour les samples qui possedent short_reads_1 et short_reads_2.
+
+- Ajout de get_sample_technology, get_long_read_path, get_optional_long_read_path et get_longread_preset.
+  Raison: remplacer les anciennes variables globales TECH et LONGREAD_PRESET par des valeurs calculees a partir du sample courant.
+
+- Adaptation des regles d'assemblage.
+  Raison: les wrappers metaMDBG, metaflye, myloasm et metaspades recoivent maintenant une technologie dependante du sample; les assembleurs long-read utilisent aussi un helper qui refuse read_path: none.
+
+- Correction locale de l'appel myloasm qui utilisait {config[technology]}.
+  Raison: cette syntaxe dependait d'une variable globale et pouvait casser; elle est remplacee par {params.technology}.
+
+- Adaptation des regles de mapping long-read.
+  Raison: le preset minimap2 est maintenant choisi sample par sample, par exemple map-hifi pour HiFi et lr:hq pour ONT.
+
+- Activation du mapping short-read quand FastQC utilise des fractions mapped/unmapped.
+  Raison: les fichiers FastQC fractionnes pour les short reads dependent de short_reads_on_contigs.bam; la regle qui produit ce BAM doit donc exister quand fastqc est active.
+
+- Adaptation de certaines regles d'evaluation qui lisaient directement read_path.
+  Raison: rendre explicite que ces regles utilisent des long reads et eviter qu'un sample Illumina avec read_path: none soit traite comme un sample long-read.
+
+- Ajout de contraintes sur les regles read_contig_mapping_evaluation et read_contig_mapping_plot.
+  Raison: empecher les regles long-read de capturer des sorties short-read comme short_reads_on_contigs_mapping_evaluation/report.txt ou metabat2_bins_short_reads_alignement/read_contig_mapping.txt.
+
+- Exclusion des bins short-read des cibles long-read de read_contig_mapping_plot dans rule all.
+  Raison: les plots pour metabat2_bins_short_reads_alignement doivent etre produits par la regle short_read_contig_mapping_plot, sans appeler get_long_read_path sur les samples Illumina.
+
+- Clarification de la logique de binning.
+  Raison: binning est maintenant le switch global du module, tandis que long_read_binning, short_read_binning, short_read_cobinning et additional_reads_cobinning choisissent explicitement les modes a lancer.
+
+- Ajout de validations dediees a la configuration de binning.
+  Raison: produire des erreurs explicites quand un mode est actif avec binning false, quand aucun mode n'est actif avec binning true, quand aucun binner n'est liste, quand un binner non supporte est utilise, ou quand short_read_binning n'a pas ses pre-requis Illumina/metaspades/metabat2.
+
+- Suppression du fallback global pour short_reads_1 et short_reads_2.
+  Raison: dans le modele strict, les short reads doivent etre definis uniquement dans les samples Illumina, afin qu'un sample HiFi/ONT ne soit pas considere comme short-read par accident.
+
+- Suppression du bloc global binnings inutilise dans le Snakefile.
+  Raison: les targets de binning sont maintenant generees par get_binning_triples, compatible_binning_expand et compatible_binner_expand.
+
+- Integration de contigs_on_reference_mapping comme option independante.
+  Raison: permettre le mapping assembly.fasta/contigs vers reference_genomes sans activer reference_mapping_evaluation, qui concerne les reads bruts vers references.
+
+- Ajout d'une validation des options basees sur reference_genomes.
+  Raison: arreter le pipeline avec un message clair si metaquast, reference_mapping_evaluation ou contigs_on_reference_mapping est active sans reference_genomes.
+
+- Remplacement des switches fastqc/nanoplot par fraction_evaluation_tools.
+  Raison: expliciter que NanoPlot s'applique aux long reads et FastQC aux short reads Illumina dans les configurations mixtes.
+
+- Ajout d'une validation minimale de fraction_evaluation_tools.
+  Raison: refuser les types de reads ou outils inconnus sans complexifier la logique des regles.
+
+- Gestion des listes vides ou commentees dans fractions et fraction_evaluation_tools.
+  Raison: YAML convertit ces listes en None; le pipeline les traite maintenant comme des listes vides afin de ne demander aucun output FastQC/NanoPlot sans erreur.
+
+- Suppression des placeholders Snakefile dans rule all.
+  Raison: les options desactivees retournent maintenant une liste vide, ce qui rend le dry-run plus lisible sans changer les outputs demandes quand les options sont actives.
+
+- Ajout et validation de cleanup_tmp dans la configuration.
+  Raison: exposer clairement la suppression des fichiers temporaires d'assemblage, avec cleanup_tmp: no pour les conserver.
+
+- Normalisation de cleanup_tmp avant validation et passage aux wrappers.
+  Raison: YAML peut lire yes/no comme des booleens True/False; Mapler les convertit maintenant en yes/no pour garder le comportement attendu.
+
+- Correction du wrapper OPERA-MS pour produire l'assembly finale au chemin attendu.
+  Raison: final_assembly.fasta est maintenant deplace vers outputs/{sample}/operaMS/assembly.fasta avant tout cleanup du dossier tmp.
+
+- Correction de l'environnement OPERA-MS.
+  Raison: perl-switch n'est pas disponible via les channels conda utilises; le module Perl Switch est maintenant installe avec cpanm dans l'environnement OPERA-MS seulement s'il manque.
+
+- Integration des auxiliary short reads pour les outils hybrides.
+  Raison: short_reads_1/short_reads_2 restent reserves aux samples Illumina, tandis que auxiliary_short_reads_1/2 sont optionnels sur les samples HiFi/ONT et servent uniquement a OPERA-MS et au short_read_cobinning.
+
+- Integration de HyLight comme assembleur hybride.
+  Raison: HyLight utilise les long reads d'un sample HiFi/ONT et ses auxiliary_short_reads_1/2, avec creation temporaire d'un FASTQ interleaved dans le wrapper.
+
+- Renforcement de la validation du modele strict des samples.
+  Raison: refuser explicitement short_reads_1/2 dans les samples HiFi/ONT et auxiliary_short_reads_1/2 dans les samples Illumina.
+
+- Modification du short_read_cobinning pour utiliser auxiliary_short_reads_on_contigs.bam.
+  Raison: eviter que le cobinning hybride consomme par erreur le BAM Illumina standard outputs/{sample}/{assembler}/short_reads_on_contigs.bam.
+
+- Mise a jour des fichiers config_template.yaml, config_test.yaml et config_test_evaluation_only.yaml.
+  Raison: aligner les exemples et configs de test avec le nouveau format ou technology est defini dans chaque sample.
+
+- Alignement architectural des configs de test avec config_template.yaml.
+  Raison: config_test.yaml et config_test_evaluation_only.yaml exposent maintenant les memes options top-level que le template, comme cleanup_tmp, long_read_binning, contigs_on_reference_mapping, auxiliary_short_reads et les ressources metaspades, tout en conservant leur role de configs de test.
+
+- Compression des assemblies finales en assembly.fasta.gz.
+  Raison: les regles d'assemblage produisent maintenant outputs/{sample}/{assembler}/assembly.fasta.gz via un finalizer commun, et les regles downstream consomment ce chemin compresse.
+
+- Compression des FASTQ intermediaires de fractions mapped/unmapped.
+  Raison: les fractions long reads et les fractions Illumina pour FastQC sont maintenant produites en .fastq.gz, sans copie compressee de la fraction full.
+
+- Aucun commit et aucun push n'ont ete effectues.
+  Raison: respecter la regle de travail locale; toute action git de commit ou push necessite une permission explicite.

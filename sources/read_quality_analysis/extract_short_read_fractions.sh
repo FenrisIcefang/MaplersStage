@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-reads_on_contigs=$1
-mapped_reads=$2
-unmapped_reads=$3
+bam=$1
+output_directory=$2
+
+mkdir -p "$output_directory/mapped"
+mkdir -p "$output_directory/unmapped"
 
 cleanup_paths=()
 
@@ -61,10 +63,21 @@ write_fastq_gz() {
     mv "$tmp" "$output"
 }
 
-echo "extracting unmapped reads..."
-write_fastq_gz "$reads_on_contigs" "$unmapped_reads" -f 4
+# ------------------------------------------------------------
+# Definition used here:
+# mapped/unmapped is evaluated per read, not per pair.
+# In other words if a read in R1 is mapped and this very same read is unmapped in R2 bcs it's of low quality 
+# it will appear in both the mapped and unmapped .html
+# ------------------------------------------------------------
 
-echo "extracting mapped reads..."
-write_fastq_gz "$reads_on_contigs" "$mapped_reads" -F 4
+# R1 mapped: first in pair (-f 64), read itself mapped (-F 4)
+write_fastq_gz "$bam" "$output_directory/mapped/R1.fastq.gz" -f 64 -F 4
 
-echo "Done !"
+# R2 mapped: second in pair (-f 128), read itself mapped (-F 4)
+write_fastq_gz "$bam" "$output_directory/mapped/R2.fastq.gz" -f 128 -F 4
+
+# R1 unmapped: first in pair (-f 64) and read itself unmapped (-f 4)
+write_fastq_gz "$bam" "$output_directory/unmapped/R1.fastq.gz" -f 68
+
+# R2 unmapped: second in pair (-f 128) and read itself unmapped (-f 4)
+write_fastq_gz "$bam" "$output_directory/unmapped/R2.fastq.gz" -f 132
