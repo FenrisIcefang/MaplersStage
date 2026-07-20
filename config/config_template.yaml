@@ -1,4 +1,4 @@
-analysis_name: test_1_technology_sample # Used to name the logs files
+analysis_name: analysis_name # Used to name the logs files
 
 ##### Inputs #####
 ### Samples ###
@@ -11,22 +11,22 @@ analysis_name: test_1_technology_sample # Used to name the logs files
 # - Do not define auxiliary_short_reads_1/2 inside illumina samples.
 
 samples:
- - name: hifi_1perc
+ - name: sample_name
    technology: hifi
-   read_path: /projects/genscale/amashi/data/raw/zymoD_hifi/zymoD6331_sub1.fastq
-   auxiliary_short_reads_1: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R1.fastq.gz
-   auxiliary_short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
+   read_path: /path/to/long/reads.fastq
+   # auxiliary_short_reads_1: /path/to/illumina_R1.fastq.gz
+   # auxiliary_short_reads_2: /path/to/illumina_R2.fastq.gz
 
- - name: ont_1perc
+ - name: sample_name
    technology: ont
    read_path: /projects/genscale/amashi/data/raw/zymoD_ont/PAY12289_barcode13_sub1_match.fastq.gz
    # auxiliary_short_reads_1: /path/to/illumina_R1.fastq.gz
    # auxiliary_short_reads_2: /path/to/illumina_R2.fastq.gz
 
- - name: illumina_1perc
+ - name: sample_name
    technology: illumina
-   short_reads_1: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R1.fastq.gz
-   short_reads_2: /projects/genscale/amashi/data/raw/zymoDIllumina/sub_R2.fastq.gz
+   short_reads_1: /path/to/short/reads_1.fastq
+   short_reads_2: /path/to/short/reads_2.fastq
    read_path: none
 
 
@@ -42,9 +42,7 @@ samples:
 # (Optional): Reference genomes used by MetaQUAST, reference_mapping_evaluation,
 # and contigs_on_reference_mapping.
 reference_genomes:
-  - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Escherichia_coli_B1109.fasta
-  - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Saccharomyces_cerevisiae.fasta
-  - /projects/genscale/amashi/data/raw/ZymoD6331_Ref_genomes/Salmonella_enterica.fasta
+#- /path/to/reference_genome.fasta
 
 
 # (Optional): used for evaluation a csv with every line following the template "reference_genome_name, group". The names must be the same as the reference genomes files (without the path and extentions), and the groups are arbitrary
@@ -57,8 +55,8 @@ reference_genomes:
 
 ### External programs ###
 # (Optional): used for evaluation via taxonomic assignation
-kraken2db: /db/kraken2/current/k2_standard_20251015/  #must be downloaded separately
-gtdbtk_database: /projects/genscale/nimauric/databases/gtdbtk_release220/ #must be downloaded separately
+kraken2db: /path/to/kraken_database/  #must be downloaded separately
+gtdbtk_database: /path/to/gtdbtk_release220/ #must be downloaded separately
 mash_database: outputs/mash_db #if doesn't exist, will be created here
 checkm_database: outputs/CheckM2_database/uniref100.KO.1.dmnd #if it doesn't exist, CheckM2_database/uniref100.KO.1.dmnd will be created in outputs
 
@@ -83,7 +81,7 @@ assemblers: # uncomment assemblers to use them
 ### Binning ###
 # Global switch for all binning analyses.
 # If false, no binning mode will run.
-binning: true
+binning: false
 
 # Binners create bins/MAGs from contigs and read coverage.
 # Currently supported: metabat2
@@ -92,23 +90,23 @@ binners:
 
 # Binning modes decide which read coverage is used:
 
-long_read_binning: true   # main long reads on contigs, uses: outputs/{sample}/{assembler}/reads_on_contigs.bam
-short_read_binning: true  # Illumina reads on metaspades assemblies, uses : outputs/{sample}/{assembler}/short_reads_on_contigs.bam
-short_read_cobinning: true  # long-read coverage + auxiliary short-read coverage
+long_read_binning: false   # main long reads on contigs, uses: outputs/{sample}/{assembler}/reads_on_contigs.bam
+short_read_binning: false  # Illumina reads on metaspades assemblies, uses : outputs/{sample}/{assembler}/short_reads_on_contigs.bam
+short_read_cobinning: false  # long-read coverage + auxiliary short-read coverage
 additional_reads_cobinning: false # main long reads + additional long-read datasets
 
 
 ### Evaluation ###
 # contig analysis
-metaquast: true # compares assembly.fasta.gz to reference_genomes and reports assembly metrics; requires reference_genomes
-read_mapping_evaluation: true # evaluates long reads mapped back to assembled contigs; outputs reads_on_contigs_mapping_evaluation/report.txt
-short_read_mapping_evaluation: true # evaluates Illumina reads mapped back to assembled contigs; requires at least one illumina sample with short_reads_1 and short_reads_2
-reference_mapping_evaluation: true # maps raw reads to reference_genomes; outputs long_reads_on_reference.*.bam and short_reads_on_reference.*.bam; requires reference_genomes
-contigs_on_reference_mapping: true # maps assembly.fasta.gz/contigs to reference_genomes; outputs contigs_on_reference.*.bam; requires reference_genomes
+metaquast: false # compares assembly.fasta.gz to reference_genomes and reports assembly metrics; requires reference_genomes
+read_mapping_evaluation: false # evaluates long reads mapped back to assembled contigs; outputs reads_on_contigs_mapping_evaluation/report.txt
+short_read_mapping_evaluation: false # evaluates Illumina reads mapped back to assembled contigs; requires at least one illumina sample with short_reads_1 and short_reads_2
+reference_mapping_evaluation: false # maps raw reads to reference_genomes; outputs long_reads_on_reference.*.bam and short_reads_on_reference.*.bam; requires reference_genomes
+contigs_on_reference_mapping: false # maps assembly.fasta.gz/contigs to reference_genomes; outputs contigs_on_reference.*.bam; requires reference_genomes
 
 # bins analysis
-checkm: true
-gtdbtk: true # requires gtdbtk_database and mash_database, analyses all bins
+checkm: false
+gtdbtk: false # requires gtdbtk_database and mash_database, analyses all bins
 kraken2_on_bins: false #/!\ Require having done binning separatly on a previous step, requires kraken2db, analyses bins specified in kraken2_target_bins
 kraken2_target_bins: #/!\ Require having done binning separatly on a previous step (it analyzes the bins within the mapler output), requires kraken2db. Do not include the .fa extension in the name
  - bin.1
@@ -128,8 +126,8 @@ fraction_evaluation_tools:
   short_reads:
   - fastqc
 
-kraken2: true # requires kraken2db
-kat : true
+kraken2: false # requires kraken2db
+kat : false
 
 ##### Parameters #####
 ### Functional parameters ###
